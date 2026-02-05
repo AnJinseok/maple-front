@@ -29,6 +29,16 @@ export function getNpcImageUrl(npcId) {
 }
 
 /**
+ * 아이템 이미지(PNG) URL 반환 (resources/static/items/{item_id}.png)
+ * - 입력: itemId(string|number)
+ * - 출력: string URL, 없으면 null
+ */
+export function getItemImageUrl(itemId) {
+    if (itemId == null || itemId === "") return null;
+    return `${API_ORIGIN}/items/${encodeURIComponent(String(itemId))}.png`;
+}
+
+/**
  * 쿼리 파라미터를 만들기 위해 값이 비어있는 키를 제거합니다.
  * - 입력: params(object)
  * - 출력: object (undefined / "" 제거된 객체)
