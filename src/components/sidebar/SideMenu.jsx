@@ -65,6 +65,14 @@ export default function SideMenu() {
                             맵
                         </NavLink>
                     </li>
+                    <li>
+                        <NavLink
+                            to="/monsters"
+                            className={({ isActive }) => (isActive ? "active" : "")}
+                        >
+                            몬스터
+                        </NavLink>
+                    </li>
                 </ul>
             </nav>
         </aside>

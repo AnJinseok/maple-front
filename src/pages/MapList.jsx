@@ -3,7 +3,6 @@ import { useWorld } from "../contexts/WorldContext";
 import {
     fetchChronostoryMapBundle,
     fetchChronostoryMaps,
-    fetchChronostoryMonsters,
     fetchChronostoryMobDetail,
     fetchChronostoryNpcDetail,
     fetchChronostoryNpcs,
@@ -13,7 +12,6 @@ import {
     getItemImageUrl,
     fetchMaplelandMapBundle,
     fetchMaplelandMaps,
-    fetchMaplelandMonsters,
     fetchMaplelandMobDetail,
     fetchMaplelandNpcDetail,
     fetchMaplelandNpcs,
@@ -38,13 +36,11 @@ export default function MapList() {
     // 확정된 검색 키워드(조회에 사용)
     const [keyword, setKeyword] = useState("");
 
-    // 검색 타입: town(타운/맵 목록), monster(몬스터), npc(NPC)
+    // 검색 타입: town(타운/맵 목록), npc(NPC) — 몬스터는 /monsters 페이지에서 검색
     const [searchType, setSearchType] = useState("town");
 
     // 맵 목록(타운 검색 결과)
     const [maps, setMaps] = useState([]);
-    // 몬스터 검색 결과
-    const [monsterResults, setMonsterResults] = useState([]);
     // NPC 검색 결과
     const [npcResults, setNpcResults] = useState([]);
     const [listLoading, setListLoading] = useState(false);
@@ -216,11 +212,11 @@ export default function MapList() {
     function handleChangeSearchType(e) {
         const nextType = e.target.value;
 
-        // 조건문: 허용된 타입만 반영
-        if (!["town", "monster", "npc"].includes(nextType)) return;
+        // 조건문: 허용된 타입만 반영 (몬스터는 사이드바에서 검색)
+        if (!["town", "npc"].includes(nextType)) return;
 
         setSearchType(nextType);
-        // 조건문: 타입 변경 시 키워드/선택/상세 초기화(UX)
+        // 조건문: 타입 변경 시 키워드/선택/상세 초기화(UX, 몬스터 결과는 사이드바에서 유지)
         setKeywordInput("");
         setKeyword("");
         setSelectedMapKey(null);
@@ -228,7 +224,6 @@ export default function MapList() {
         setListError(null);
         setDetailError(null);
         setMaps([]);
-        setMonsterResults([]);
         setNpcResults([]);
     }
 
@@ -281,21 +276,48 @@ export default function MapList() {
 
     /**
      * 몬스터 검색 결과 클릭 핸들러
-     * - 입력: monsterRow(object)
+     * - 맵 상세 로드 + 선택한 몬스터 상세를 우측에 표시
+     * - 입력: monsterRow(object), index(number)
      * - 출력: 없음(상태 업데이트)
      */
-    function handleSelectMonsterRow(monsterRow) {
-        const nextKey = getMapKeyFromSearchRow(monsterRow);
-        // 조건문: 맵 key가 없으면 선택 불가
-        if (!nextKey) return;
-        // 조건문: 다른 맵(검색 결과)을 선택하면 몬스터 상세 선택은 원상태로 초기화
-        setSelectedMonsterKey(null);
-        setSelectedMonsterRow(null);
+    function handleSelectMonsterRow(monsterRow, index) {
+        const nextMapKey = getMapKeyFromSearchRow(monsterRow);
+        if (!nextMapKey) return;
+
+        const monsterKey = getMonsterRowKey(monsterRow, index ?? 0);
+        const mobId = monsterRow.mob_id ?? monsterRow.mobId ?? monsterRow.id ?? null;
+
+        // NPC 선택 해제
         setSelectedNpcKey(null);
         setSelectedNpcRow(null);
-        setMobDetail(null);
         setNpcDetail(null);
-        setSelectedMapKey(nextKey);
+        // 맵 선택 → 맵 상세(가운데) 로드
+        setSelectedMapKey(nextMapKey);
+        // 선택한 몬스터로 설정 → 우측 상세에 표시
+        setSelectedMonsterKey(monsterKey);
+        setSelectedMonsterRow(monsterRow);
+
+        // 몬스터 상세 API 호출 (우측 패널에 표시)
+        if (mobId) {
+            setMobDetailLoading(true);
+            setMobDetailError(null);
+            setMobDetail(null);
+            const fetchMobDetail = isMapleLandWorld ? fetchMaplelandMobDetail : isChronoStoryWorld ? fetchChronostoryMobDetail : null;
+            if (fetchMobDetail) {
+                fetchMobDetail(mobId)
+                    .then(res => {
+                        const payload = res?.data ?? res;
+                        setMobDetail(payload);
+                    })
+                    .catch(err => {
+                        setMobDetailError(err?.message || "몬스터 상세 정보 조회 중 오류가 발생했습니다.");
+                        setMobDetail(null);
+                    })
+                    .finally(() => setMobDetailLoading(false));
+            }
+        } else {
+            setMobDetail(null);
+        }
     }
 
     /**
@@ -368,47 +390,12 @@ export default function MapList() {
                         setMaps(list);
                     }
 
-                    setMonsterResults([]);
                     setNpcResults([]);
                 })
                 .catch(err => {
                     // 조건문: 요청이 취소되었거나 더 최신 요청이 있으면 무시
                     if (isCancelled || currentRequestId !== listRequestIdRef.current) return;
                     setListError(err?.message || "맵 조회 중 오류가 발생했습니다.");
-                })
-                .finally(() => {
-                    // 조건문: 현재 요청이 최신 요청일 때만 로딩 상태 업데이트
-                    if (!isCancelled && currentRequestId === listRequestIdRef.current) {
-                        setListLoading(false);
-                    }
-                });
-        } else if (searchType === "monster") {
-            const fetchMonsters = isMapleLandWorld ? fetchMaplelandMonsters : fetchChronostoryMonsters;
-            fetchMonsters({
-                page: 0,
-                size: 200,
-                keyword: keyword || undefined
-            })
-                .then(res => {
-                    // 조건문: 요청이 취소되었거나 더 최신 요청이 있으면 무시
-                    if (isCancelled || currentRequestId !== listRequestIdRef.current) return;
-                    const payload = res?.data ?? res;
-                    const list = payload?.items ?? [];
-
-                    // 조건문: 배열이 아니면 빈 배열 처리
-                    if (!Array.isArray(list)) {
-                        setMonsterResults([]);
-                    } else {
-                        setMonsterResults(list);
-                    }
-
-                    setMaps([]);
-                    setNpcResults([]);
-                })
-                .catch(err => {
-                    // 조건문: 요청이 취소되었거나 더 최신 요청이 있으면 무시
-                    if (isCancelled || currentRequestId !== listRequestIdRef.current) return;
-                    setListError(err?.message || "몬스터 검색 중 오류가 발생했습니다.");
                 })
                 .finally(() => {
                     // 조건문: 현재 요청이 최신 요청일 때만 로딩 상태 업데이트
@@ -437,7 +424,6 @@ export default function MapList() {
                     }
 
                     setMaps([]);
-                    setMonsterResults([]);
                 })
                 .catch(err => {
                     // 조건문: 요청이 취소되었거나 더 최신 요청이 있으면 무시
@@ -1186,14 +1172,10 @@ export default function MapList() {
                     <section className="map-card map-list-card">
                         <div className="map-card-header">
                             <h3>
-                                {searchType === "town" ? "맵 목록" : searchType === "monster" ? "몬스터 검색" : "NPC 검색"}
+                                {searchType === "town" ? "맵 목록" : "NPC 검색"}
                             </h3>
                             <span className="map-badge">
-                                {searchType === "town"
-                                    ? `${maps.length}개`
-                                    : searchType === "monster"
-                                        ? `${monsterResults.length}개`
-                                        : `${npcResults.length}개`}
+                                {searchType === "town" ? `${maps.length}개` : `${npcResults.length}개`}
                             </span>
                         </div>
 
@@ -1204,7 +1186,6 @@ export default function MapList() {
                                 onChange={handleChangeSearchType}
                             >
                                 <option value="town">타운(맵)</option>
-                                <option value="monster">몬스터</option>
                                 <option value="npc">NPC</option>
                             </select>
                             <input
@@ -1214,9 +1195,7 @@ export default function MapList() {
                                 placeholder={
                                     searchType === "town"
                                         ? "타운(마을) 이름 검색 (예: 커닝시티)"
-                                        : searchType === "monster"
-                                            ? "몬스터 한글명 검색 (예: 리게이터)"
-                                            : "NPC 한글명 검색"
+                                        : "NPC 한글명 검색"
                                 }
                             />
                             <button className="btn btn-primary" type="submit" disabled={listLoading}>
@@ -1228,10 +1207,6 @@ export default function MapList() {
                         {listError && <div className="map-error">{listError}</div>}
 
                         {!listLoading && !listError && searchType === "town" && maps.length === 0 && (
-                            <div className="map-empty">조회 결과가 없습니다.</div>
-                        )}
-
-                        {!listLoading && !listError && searchType === "monster" && monsterResults.length === 0 && (
                             <div className="map-empty">조회 결과가 없습니다.</div>
                         )}
 
@@ -1300,35 +1275,6 @@ export default function MapList() {
                             </div>
                         )}
 
-                        {/* 몬스터 검색 결과 */}
-                        {!listLoading && !listError && searchType === "monster" && monsterResults.length > 0 && (
-                            <div className="map-list">
-                                {/* 루프: 몬스터 검색 결과 렌더 */}
-                                {monsterResults.map((row, index) => {
-                                    const display = getMonsterDisplay(row);
-                                    const townKr = row?.town_name_kr ?? "-";
-                                    const mapKr = row?.map_name_kr ?? "-";
-                                    const mapKey = getMapKeyFromSearchRow(row) || `monster-${index}`;
-
-                                    const isSelected = mapKey === selectedMapKey;
-
-                                    return (
-                                        <button
-                                            key={row?.id ?? mapKey}
-                                            type="button"
-                                            className={`map-list-item ${isSelected ? "selected" : ""}`}
-                                            onClick={() => handleSelectMonsterRow(row)}
-                                        >
-                                            <div className="map-list-name">
-                                                {display.nameKr} (Lv.{display.level ?? "-"} / XP {display.xp ?? "-"})
-                                            </div>
-                                            <div className="map-list-meta">{townKr} - {mapKr}</div>
-                                        </button>
-                                    );
-                                })}
-                            </div>
-                        )}
-
                         {/* NPC 검색 결과 */}
                         {!listLoading && !listError && searchType === "npc" && npcResults.length > 0 && (
                             <div className="map-list">
@@ -1368,7 +1314,7 @@ export default function MapList() {
 
                         {!selectedMapKey && (
                             <div className="map-empty">
-                                왼쪽에서 {searchType === "town" ? "맵" : searchType === "monster" ? "몬스터" : "NPC"}를 선택해주세요.
+                                왼쪽에서 {searchType === "town" ? "맵" : "NPC"}를 선택해주세요. (몬스터 검색은 상단 메뉴 ‘몬스터’에서 이용할 수 있습니다.)
                             </div>
                         )}
 
@@ -1546,79 +1492,64 @@ export default function MapList() {
                                 )}
                                 {!mobDetailLoading && !mobDetailError && mobDetail && (
                                     <>
-                                        {/* 몬스터 기본 정보: 왼쪽 이미지(resources/static/monster-moves/{mob_id}.gif), 오른쪽 능력치 */}
-                                        {mobDetail.mob && (
-                                            <div style={{ 
-                                                display: "flex", 
-                                                gap: "20px", 
-                                                alignItems: "flex-start",
-                                                flexWrap: "wrap"
-                                            }}>
-                                                {/* 왼쪽: 몬스터 이미지 (서버 /monster-moves/{mob_id}.gif) */}
-                                                {(() => {
-                                                    const mobId = mobDetail.mob?.mob_id ?? mobDetail.mob?.mobId ?? null;
-                                                    const imgUrl = getMonsterImageUrl(mobId);
-                                                    return imgUrl ? (
-                                                        <div 
-                                                            style={{ 
-                                                                flexShrink: 0, 
-                                                                width: "160px", 
-                                                                height: "160px", 
-                                                                borderRadius: "8px", 
-                                                                overflow: "hidden", 
-                                                                border: "1px solid var(--app-border)",
-                                                                background: "var(--app-surface)"
-                                                            }}
-                                                        >
-                                                            <img 
-                                                                src={imgUrl} 
-                                                                alt={mobDetail.mob?.monster_name_kr ?? mobDetail.mob?.monsterNameKr ?? "몬스터"} 
-                                                                style={{ height: "100%", width: "auto", maxWidth: "100%", objectFit: "contain", display: "block" }}
-                                                                onError={(e) => { if (e.target?.parentElement) e.target.parentElement.style.display = "none"; }}
-                                                            />
+                                        {/* 레이아웃: 왼쪽 = 몬스터 능력치, 오른쪽 = 드롭템 */}
+                                        <div style={{ 
+                                            display: "grid", 
+                                            gridTemplateColumns: "minmax(0, 1fr) minmax(280px, 1fr)", 
+                                            gap: "24px", 
+                                            alignItems: "start"
+                                        }}>
+                                            {/* 왼쪽: 선택한 몬스터 능력치 (이미지 + 스탯) */}
+                                            <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+                                                {mobDetail.mob && (
+                                                    <>
+                                                        {/* 몬스터 이미지 */}
+                                                        {(() => {
+                                                            const mobId = mobDetail.mob?.mob_id ?? mobDetail.mob?.mobId ?? null;
+                                                            const imgUrl = getMonsterImageUrl(mobId);
+                                                            return imgUrl ? (
+                                                                <div style={{ flexShrink: 0, width: "160px", height: "160px", borderRadius: "8px", overflow: "hidden", border: "1px solid var(--app-border)", background: "var(--app-surface)" }}>
+                                                                    <img src={imgUrl} alt={mobDetail.mob?.monster_name_kr ?? mobDetail.mob?.monsterNameKr ?? "몬스터"} style={{ height: "100%", width: "auto", maxWidth: "100%", objectFit: "contain", display: "block" }} onError={(e) => { if (e.target?.parentElement) e.target.parentElement.style.display = "none"; }} />
+                                                                </div>
+                                                            ) : null;
+                                                        })()}
+                                                        {/* 능력치 카드 그리드 */}
+                                                        <div className="map-kv-label" style={{ fontWeight: "bold", marginBottom: "4px" }}>몬스터 능력치</div>
+                                                        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(120px, 160px))", gap: "8px" }}>
+                                                            {buildMonsterDetailEntries(mobDetail.mob).map((entry, idx) => (
+                                                                <div
+                                                                    key={`mob-${entry.label}-${idx}`}
+                                                                    style={{ padding: "10px", border: "1px solid var(--app-border)", borderRadius: "8px", background: "var(--app-surface)", boxShadow: "0 1px 2px rgba(0, 0, 0, 0.05)", transition: "all 0.2s ease" }}
+                                                                    onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(59, 130, 246, 0.05)"; e.currentTarget.style.borderColor = "rgba(59, 130, 246, 0.3)"; e.currentTarget.style.transform = "translateY(-1px)"; e.currentTarget.style.boxShadow = "0 2px 4px rgba(0, 0, 0, 0.08)"; }}
+                                                                    onMouseLeave={(e) => { e.currentTarget.style.background = "var(--app-surface)"; e.currentTarget.style.borderColor = "var(--app-border)"; e.currentTarget.style.transform = "translateY(0)"; e.currentTarget.style.boxShadow = "0 1px 2px rgba(0, 0, 0, 0.05)"; }}
+                                                                >
+                                                                    <div style={{ fontSize: "11px", color: "var(--app-muted-text-color)", marginBottom: "4px", fontWeight: "700" }}>{entry.label}</div>
+                                                                    <div style={{ fontSize: "13px", color: "var(--app-text-color)", fontWeight: "600" }}>{entry.value}</div>
+                                                                </div>
+                                                            ))}
                                                         </div>
-                                                    ) : null;
-                                                })()}
-                                                {/* 오른쪽: 능력치 카드 그리드 (폭 제한으로 넓게 늘어나지 않음) */}
-                                                <div style={{ flex: "1", minWidth: "120px", display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(120px, 160px))", gap: "8px" }}>
-                                                    {buildMonsterDetailEntries(mobDetail.mob).map((entry, idx) => (
-                                                        <div 
-                                                            key={`mob-${entry.label}-${idx}`} 
-                                                            style={{ 
-                                                                padding: "10px", 
-                                                                border: "1px solid var(--app-border)", 
-                                                                borderRadius: "8px",
-                                                                background: "var(--app-surface)",
-                                                                boxShadow: "0 1px 2px rgba(0, 0, 0, 0.05)",
-                                                                transition: "all 0.2s ease"
-                                                            }}
-                                                            onMouseEnter={(e) => {
-                                                                e.currentTarget.style.background = "rgba(59, 130, 246, 0.05)";
-                                                                e.currentTarget.style.borderColor = "rgba(59, 130, 246, 0.3)";
-                                                                e.currentTarget.style.transform = "translateY(-1px)";
-                                                                e.currentTarget.style.boxShadow = "0 2px 4px rgba(0, 0, 0, 0.08)";
-                                                            }}
-                                                            onMouseLeave={(e) => {
-                                                                e.currentTarget.style.background = "var(--app-surface)";
-                                                                e.currentTarget.style.borderColor = "var(--app-border)";
-                                                                e.currentTarget.style.transform = "translateY(0)";
-                                                                e.currentTarget.style.boxShadow = "0 1px 2px rgba(0, 0, 0, 0.05)";
-                                                            }}
-                                                        >
-                                                            <div style={{ fontSize: "11px", color: "var(--app-muted-text-color)", marginBottom: "4px", fontWeight: "700" }}>
-                                                                {entry.label}
-                                                            </div>
-                                                            <div style={{ fontSize: "13px", color: "var(--app-text-color)", fontWeight: "600" }}>
-                                                                {entry.value}
-                                                            </div>
-                                                        </div>
-                                                    ))}
-                                                </div>
+                                                        {isChronoStoryWorld && mobDetail.spawnMaps && mobDetail.spawnMaps.length > 0 && (
+                                                            <>
+                                                                <div className="map-kv-label" style={{ fontWeight: "bold", marginBottom: "6px", marginTop: "8px" }}>출몰 지역</div>
+                                                                <ul style={{ margin: 0, paddingLeft: "20px", fontSize: "13px", color: "var(--app-text-color)", lineHeight: 1.6 }}>
+                                                                    {mobDetail.spawnMaps.map((loc, idx) => {
+                                                                        const townKr = loc?.town_name_kr ?? loc?.townNameKr ?? "";
+                                                                        const mapKr = loc?.map_name_kr ?? loc?.mapNameKr ?? "";
+                                                                        const mapEn = loc?.map_name_en ?? loc?.mapNameEn ?? "";
+                                                                        const label = townKr && mapKr ? `${townKr} - ${mapKr}` : mapKr || mapEn || "-";
+                                                                        const sub = mapEn && mapKr !== mapEn ? ` (${mapEn})` : "";
+                                                                        return <li key={`spawn-${idx}`}>{label}{sub}</li>;
+                                                                    })}
+                                                                </ul>
+                                                            </>
+                                                        )}
+                                                    </>
+                                                )}
                                             </div>
-                                        )}
-                                        {/* 드롭 정보: 크로노스토리는 publicTableSet, 메이플랜드는 mobDrops */}
-                                        <div style={{ marginTop: "16px" }}>
-                                            <div className="map-kv-label" style={{ fontWeight: "bold", marginBottom: "12px" }}>드롭 아이템</div>
+
+                                            {/* 오른쪽: 드롭 아이템 */}
+                                            <div>
+                                                <div className="map-kv-label" style={{ fontWeight: "bold", marginBottom: "12px" }}>드롭 아이템</div>
                                             {isChronoStoryWorld && mobDetail.publicTableSet && mobDetail.publicTableSet.length > 0 ? (
                                                 <div style={{ 
                                                     display: "grid", 
@@ -1805,6 +1736,7 @@ export default function MapList() {
                                             ) : (
                                                 <div className="map-empty">드롭 정보가 없습니다.</div>
                                             )}
+                                            </div>
                                         </div>
 
                                         {/* 몬스터 상세 하단: chronostory_public_table_set (DropperID=mob_id, InGame=TRUE) */}

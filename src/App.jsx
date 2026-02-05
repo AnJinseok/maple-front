@@ -5,6 +5,7 @@ import ItemList from "./pages/ItemList";
 import ShoutList from "./pages/ShoutList";
 import EquipStats from "./pages/EquipStats";
 import MapList from "./pages/MapList";
+import MonsterList from "./pages/MonsterList";
 import { WorldProvider } from "./contexts/WorldContext";
 import { DisplayProvider } from "./contexts/DisplayContext";
 
@@ -25,8 +26,10 @@ export default function App() {
                             <Route path="/shout" element={<ShoutList />} />
                             {/* 아이템 능력치 장착 화면 라우트 */}
                             <Route path="/equip-stats" element={<EquipStats />} />
-                            {/* 월드 공통: 맵/몬스터/NPC 정보 */}
+                            {/* 월드 공통: 맵/NPC 정보 */}
                             <Route path="/maps" element={<MapList />} />
+                            {/* 몬스터 전용 페이지 */}
+                            <Route path="/monsters" element={<MonsterList />} />
                         </Routes>
                     </MainLayout>
                 </BrowserRouter>

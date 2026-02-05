@@ -333,7 +333,7 @@ html[data-theme="dark"] .theme-toggle-btn:hover {
 
 .map-grid {
     display: grid;
-    /* 3열: 좌 맵 목록(넓게) / 중 상세(좁게) / 우 몬스터·NPC 상세(넓게) */
+    /* 3열: 맵/NPC 목록 | 상세 | 몬스터·NPC 상세 */
     grid-template-columns: minmax(260px, 420px) minmax(200px, 0.65fr) minmax(280px, 1.15fr);
     gap: 16px;
     align-items: stretch;
@@ -342,6 +342,11 @@ html[data-theme="dark"] .theme-toggle-btn:hover {
     flex: 1;
     min-height: 0;
     overflow: hidden;
+}
+
+/* 몬스터 전용 페이지: 2열 (목록 | 상세) */
+.monster-list-grid {
+    grid-template-columns: minmax(260px, 380px) minmax(320px, 1fr);
 }
 
 /* 그리드 내 카드: 높이 제한 + 내부 스크롤로 페이지 스크롤 방지 */
