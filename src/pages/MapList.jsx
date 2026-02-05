@@ -10,6 +10,7 @@ import {
     fetchChronostoryItemDetail,
     getMonsterImageUrl,
     getNpcImageUrl,
+    getItemImageUrl,
     fetchMaplelandMapBundle,
     fetchMaplelandMaps,
     fetchMaplelandMonsters,
@@ -2133,29 +2134,37 @@ export default function MapList() {
 
                         {!itemDetailLoading && !itemDetailError && itemDetail && (
                             <>
-                                {/* 이미지 영역 */}
-                                {itemDetail.item_file_path && (
+                                {/* 이미지 영역: /items/{item_id}.png (API 서버 static/items) */}
+                                {(itemDetail.item_id != null && itemDetail.item_id !== "") && (
                                     <div style={{ marginBottom: "20px", textAlign: "center" }}>
                                         <div style={{
-                                            padding: "20px",
+                                            padding: "12px",
                                             border: "1px solid var(--app-border)",
                                             borderRadius: "8px",
                                             background: "var(--app-surface)",
                                             display: "inline-block",
-                                            minWidth: "200px",
-                                            minHeight: "200px"
+                                            lineHeight: 0
                                         }}>
                                             <img 
-                                                src={itemDetail.item_file_path} 
+                                                src={getItemImageUrl(itemDetail.item_id)} 
                                                 alt={itemDetail.item_name_kr || itemDetail.item_name_en || "아이템 이미지"}
                                                 style={{
-                                                    maxWidth: "200px",
-                                                    maxHeight: "200px",
-                                                    objectFit: "contain"
+                                                    display: "block",
+                                                    width: "auto",
+                                                    height: "auto",
+                                                    maxWidth: "100%",
+                                                    verticalAlign: "middle"
                                                 }}
                                                 onError={(e) => {
                                                     e.target.style.display = "none";
-                                                    e.target.parentElement.innerHTML = '<div style="color: var(--app-muted-text-color); padding: 20px;">이미지를 불러올 수 없습니다</div>';
+                                                    const wrap = e.target.parentElement;
+                                                    if (wrap && !wrap.querySelector(".item-img-fallback")) {
+                                                        const fallback = document.createElement("div");
+                                                        fallback.className = "item-img-fallback";
+                                                        fallback.style.cssText = "color: var(--app-muted-text-color); padding: 20px; font-size: 13px;";
+                                                        fallback.textContent = "이미지를 불러올 수 없습니다";
+                                                        wrap.appendChild(fallback);
+                                                    }
                                                 }}
                                             />
                                         </div>
