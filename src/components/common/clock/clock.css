@@ -1,0 +1,62 @@
+.clock-range {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.clock-preview {
+    font-weight: 700;
+    color: #3f51b5;
+    margin-bottom: 8px;
+}
+
+.clock-svg {
+    cursor: crosshair;
+}
+
+.clock-bg {
+    fill: #fafafa;
+    stroke: #d0d0d0;
+    stroke-width: 2;
+}
+
+.clock-hour {
+    font-size: 13px;
+    font-weight: 700;
+    fill: #222;
+    text-anchor: middle;
+    dominant-baseline: middle;
+    user-select: none;
+}
+
+.clock-minute {
+    font-size: 11px;
+    fill: #888;
+    text-anchor: middle;
+    dominant-baseline: middle;
+    user-select: none;
+}
+
+.clock-arc {
+    fill: none;
+    stroke: #3f51b5;
+    stroke-width: 10;
+    stroke-linecap: round;
+}
+
+.clock-marker {
+    stroke: #fff;
+    stroke-width: 2;
+}
+
+.clock-marker.start {
+    fill: #22c55e;
+}
+
+.clock-marker.end {
+    fill: #ef4444;
+}
+
+.clock-center {
+    fill: #3f51b5;
+}

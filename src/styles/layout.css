@@ -1,0 +1,2158 @@
+/* =========================================================
+   1. Layout
+========================================================= */
+:root {
+    /* 라이트 테마 기본값 */
+    --app-bg: #ffffff;
+    --app-surface: #ffffff;
+    --app-border: #e5e7eb;
+
+    --app-text-color: #111827;
+    --app-muted-text-color: #6b7280;
+    --app-subtle-text-color: #374151;
+    --app-nav-color: #444444;
+    --app-logo-color: #222222;
+}
+
+html[data-theme="dark"] {
+    /* 다크 모드(최종 요구사항):
+       - 배경 전체 검정
+       - 글자 전체 흰색 */
+    --app-bg: #000000;
+    --app-surface: #0b0b0b;
+    --app-border: #2a2a2a;
+
+    --app-text-color: #ffffff;
+    --app-muted-text-color: #e5e7eb;
+    --app-subtle-text-color: #f3f4f6;
+    --app-nav-color: #ffffff;
+    --app-logo-color: #ffffff;
+}
+
+/* 다크 모드에서는 "모든 글자"를 흰색으로 강제(요구사항) */
+html[data-theme="dark"] * {
+    color: var(--app-text-color) !important;
+    -webkit-text-fill-color: var(--app-text-color) !important;
+    /* 다크 모드에서 텍스트 입력 커서(캐럿)도 흰색으로 강제 */
+    caret-color: var(--app-text-color) !important;
+}
+
+/* 다크 모드에서 폼 요소(입력/셀렉트/옵션/플레이스홀더)도 확실히 흰색으로 */
+html[data-theme="dark"] input,
+html[data-theme="dark"] textarea,
+html[data-theme="dark"] select {
+    color: var(--app-text-color) !important;
+    caret-color: var(--app-text-color) !important;
+    -webkit-text-fill-color: var(--app-text-color) !important;
+    background-color: var(--app-surface) !important;
+    border-color: var(--app-border) !important;
+}
+
+/* 다크 모드: contenteditable 영역(에디터류) 커서(캐럿)도 흰색으로 강제 */
+html[data-theme="dark"] [contenteditable="true"],
+html[data-theme="dark"] [contenteditable]:not([contenteditable="false"]) {
+    caret-color: var(--app-text-color) !important;
+}
+
+/* 다크 모드에서 브라우저 autofill(노란 배경/검정 글자) 강제 제거 */
+html[data-theme="dark"] input:-webkit-autofill,
+html[data-theme="dark"] textarea:-webkit-autofill,
+html[data-theme="dark"] select:-webkit-autofill {
+    -webkit-text-fill-color: var(--app-text-color) !important;
+    box-shadow: 0 0 0px 1000px var(--app-surface) inset !important;
+    transition: background-color 9999s ease-in-out 0s;
+}
+
+html[data-theme="dark"] option {
+    color: var(--app-text-color) !important;
+    background-color: var(--app-surface) !important;
+}
+
+html[data-theme="dark"] ::placeholder {
+    color: rgba(255, 255, 255, 0.75) !important;
+}
+
+/* 다크 모드에서 SVG 아이콘도 흰색으로(텍스트처럼 보이도록) */
+html[data-theme="dark"] svg,
+html[data-theme="dark"] svg * {
+    fill: currentColor !important;
+    stroke: currentColor !important;
+}
+
+/* 다크 모드: 사이드바 텍스트/링크는 항상 흰색으로(요구사항) */
+html[data-theme="dark"] .side-menu,
+html[data-theme="dark"] .side-menu * {
+    color: #ffffff !important;
+    -webkit-text-fill-color: #ffffff !important;
+}
+
+html[data-theme="dark"] .side-menu a,
+html[data-theme="dark"] .side-menu a:visited {
+    color: #ffffff !important;
+    -webkit-text-fill-color: #ffffff !important;
+}
+
+/* 다크 모드: /maps 검색 결과 리스트(왼쪽 리스트) 글자 흰색 고정 */
+html[data-theme="dark"] .map-list,
+html[data-theme="dark"] .map-list * {
+    color: #ffffff !important;
+    -webkit-text-fill-color: #ffffff !important;
+}
+
+/* 다크 모드: 메인(상세) 영역/카드/테이블/헤더 텍스트는 항상 흰색 유지 */
+html[data-theme="dark"] .content,
+html[data-theme="dark"] .content * {
+    color: #ffffff !important;
+    -webkit-text-fill-color: #ffffff !important;
+}
+
+/* 다크 모드: 상단 월드 select, 맵 검색 select/input 텍스트도 흰색 고정 */
+html[data-theme="dark"] .world-select-input,
+html[data-theme="dark"] .map-search-select,
+html[data-theme="dark"] .map-search-input {
+    color: #ffffff !important;
+    -webkit-text-fill-color: #ffffff !important;
+}
+
+/* 다크 모드: 상단 네비(아이템/길드/마켓) 텍스트 흰색 고정 */
+html[data-theme="dark"] .nav a,
+html[data-theme="dark"] .nav a:visited {
+    color: #ffffff !important;
+    -webkit-text-fill-color: #ffffff !important;
+}
+
+html[data-theme="dark"] .nav a:hover {
+    color: #ffffff !important;
+    -webkit-text-fill-color: #ffffff !important;
+}
+
+/* 다크 모드: 상단 로고(MapleLand) 텍스트도 흰색 고정 */
+html[data-theme="dark"] .logo a,
+html[data-theme="dark"] .logo a:visited,
+html[data-theme="dark"] .logo a:hover {
+    color: #ffffff !important;
+    -webkit-text-fill-color: #ffffff !important;
+}
+
+html[data-theme="dark"] .world-select-input option,
+html[data-theme="dark"] .map-search-select option {
+    color: #ffffff !important;
+    background-color: var(--app-surface) !important;
+}
+
+/* 다크 모드에서 흰색 텍스트가 필요한 버튼은 유지 */
+html[data-theme="dark"] .btn-primary,
+html[data-theme="dark"] .btn-page.active {
+    color: #ffffff !important;
+}
+
+body {
+    /* 기본 배경/글씨 색상(페이지 전반) */
+    background: var(--app-bg);
+    color: var(--app-text-color);
+    /* 화면 전체 80% 크기로 축소 */
+    zoom: 0.8;
+    transform-origin: top left;
+}
+
+.main-container {
+    display: flex;
+    min-height: calc(100vh - 120px);
+}
+
+.content {
+    flex: 1;
+    padding: 20px;
+}
+
+/* =========================================================
+   2. Header
+========================================================= */
+.header {
+    height: 60px;
+    border-bottom: 1px solid var(--app-border);
+    background-color: var(--app-surface);
+}
+
+.header-inner {
+    max-width: 1200px;
+    height: 100%;
+    margin: 0 auto;
+    padding: 0 20px;
+
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.header-controls {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.world-select {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.world-select-label {
+    font-size: 13px;
+    color: var(--app-muted-text-color);
+}
+
+.world-select-input {
+    height: 34px;
+    padding: 0 10px;
+    border: 1px solid var(--app-border);
+    border-radius: 8px;
+    font-size: 13px;
+    color: var(--app-text-color);
+    background: var(--app-surface);
+    outline: none;
+    min-width: 160px;
+}
+
+.world-select-input:focus {
+    border-color: #93c5fd;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+}
+
+.theme-toggle-btn {
+    height: 34px;
+    padding: 0 14px;
+    border: 1px solid rgba(148, 163, 184, 0.45);
+    border-radius: 999px;
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.95) 0%, rgba(248, 250, 252, 0.95) 100%);
+    font-size: 13px;
+    font-weight: 800;
+    cursor: pointer;
+    box-shadow: 0 10px 20px -18px rgba(0, 0, 0, 0.40);
+    transition: transform 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease, border-color 0.15s ease;
+}
+
+.theme-toggle-btn:hover {
+    border-color: rgba(59, 130, 246, 0.55);
+    box-shadow: 0 14px 28px -22px rgba(59, 130, 246, 0.55);
+    transform: translateY(-1px);
+}
+
+.theme-toggle-btn:active {
+    transform: translateY(1px);
+}
+
+.theme-toggle-btn:focus {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+}
+
+html[data-theme="dark"] .theme-toggle-btn {
+    /* 다크모드 요구사항: 버튼 배경 흰색 + 버튼 글자 검정색 */
+    background: linear-gradient(180deg, #ffffff 0%, #f3f4f6 100%) !important;
+    border-color: rgba(148, 163, 184, 0.55) !important;
+    box-shadow: 0 14px 32px -26px rgba(0, 0, 0, 0.55) !important;
+    color: #000000 !important;
+    -webkit-text-fill-color: #000000 !important;
+}
+
+html[data-theme="dark"] .theme-toggle-btn:hover {
+    background: linear-gradient(180deg, #ffffff 0%, #e5e7eb 100%) !important;
+    border-color: rgba(59, 130, 246, 0.55) !important;
+    box-shadow: 0 18px 38px -28px rgba(59, 130, 246, 0.45) !important;
+    transform: translateY(-1px);
+}
+
+
+
+.logo a {
+    font-size: 18px;
+    font-weight: bold;
+    color: var(--app-logo-color);
+    text-decoration: none;
+}
+
+.nav a {
+    margin-left: 20px;
+    font-size: 14px;
+    color: var(--app-nav-color);
+    text-decoration: none;
+}
+
+.nav a:hover {
+    color: var(--app-text-color);
+}
+
+/* =========================================================
+   Map Page (ChronoStory) — 높이 제한으로 화면 길이 줄임
+========================================================= */
+/* 조건: 맵 페이지일 때 메인 영역 flex, 전체 높이는 제한 */
+.main-container:has(.map-page) {
+    min-height: auto;
+}
+
+.content:has(.map-page) {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    width: 100%;
+}
+
+.map-page {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    width: 100%;
+    flex: 1;
+    min-height: 0;
+    max-height: calc(105vh - 0px);
+}
+
+.map-header {
+    flex-shrink: 0;
+}
+
+.map-header h2 {
+    margin: 0 0 6px 0;
+}
+
+.map-subtitle {
+    margin: 0;
+    color: var(--app-muted-text-color);
+    font-size: 13px;
+}
+
+.map-notice {
+    padding: 12px;
+    border: 1px solid #e5e7eb;
+    border-radius: 10px;
+    background: #fff;
+    color: var(--app-subtle-text-color);
+    font-size: 14px;
+}
+
+.map-grid {
+    display: grid;
+    /* 3열: 좌 맵 목록(넓게) / 중 상세(좁게) / 우 몬스터·NPC 상세(넓게) */
+    grid-template-columns: minmax(260px, 420px) minmax(200px, 0.65fr) minmax(280px, 1.15fr);
+    gap: 16px;
+    align-items: stretch;
+    min-width: 0;
+    /* 높이 제한으로 화면 길이 줄임, 카드 내부만 스크롤 */
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
+}
+
+/* 그리드 내 카드: 높이 제한 + 내부 스크롤로 페이지 스크롤 방지 */
+.map-grid .map-card {
+    border: 1px solid var(--app-border);
+    border-radius: 12px;
+    background: var(--app-surface);
+    padding: 14px;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    overflow: hidden;
+}
+
+.map-card {
+    border: 1px solid var(--app-border);
+    border-radius: 12px;
+    background: var(--app-surface);
+    padding: 14px;
+    min-width: 0;
+}
+
+.map-card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 10px;
+}
+
+.map-card-header h3 {
+    margin: 0;
+    font-size: 16px;
+}
+
+.map-badge {
+    font-size: 12px;
+    color: var(--app-muted-text-color);
+    border: 1px solid #e5e7eb;
+    padding: 2px 8px;
+    border-radius: 999px;
+}
+
+.map-search {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    margin-bottom: 12px;
+    padding: 0;
+    border: 1px solid var(--app-border);
+    border-radius: 12px;
+    background: var(--app-surface);
+    overflow: hidden;
+    width: 100%;
+}
+
+.map-search:focus-within {
+    border-color: #93c5fd;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.12);
+}
+
+.map-search-select {
+    height: 44px;
+    border: 0;
+    border-right: 1px solid var(--app-border);
+    border-radius: 0;
+    padding: 0 12px;
+    font-size: 13px;
+    color: var(--app-text-color);
+    background: transparent;
+    outline: none;
+    min-width: 120px;
+}
+
+.map-search-select:focus {
+    box-shadow: none;
+}
+
+.map-search-input {
+    flex: 1;
+    height: 44px;
+    border: 0;
+    border-radius: 0;
+    padding: 0 12px;
+    outline: none;
+    font-size: 13px;
+    background: transparent;
+    min-width: 0;
+}
+
+.map-search-input:focus {
+    box-shadow: none;
+}
+
+.map-search .btn {
+    height: 44px;
+    border-radius: 0;
+    margin: 0;
+    padding: 0 16px;
+    border-left: 1px solid rgba(255, 255, 255, 0.25);
+    min-width: 76px;
+}
+
+/* 좌측 카드: 헤더·검색 고정, 리스트만 스크롤 */
+.map-list-card .map-card-header,
+.map-list-card .map-search {
+    flex-shrink: 0;
+}
+
+.map-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    flex: 1;
+    min-height: 0;
+    overflow: auto;
+    padding-right: 4px;
+}
+
+.map-list-item {
+    text-align: left;
+    border: 1px solid var(--app-border);
+    border-radius: 10px;
+    background: var(--app-surface);
+    padding: 10px;
+    cursor: pointer;
+}
+
+.map-list-item:hover {
+    background: #f9fafb;
+}
+
+/* 다크 모드: hover 배경이 밝아질 때는 글자색을 검정으로(가독성) */
+html[data-theme="dark"] .map-list-item:hover,
+html[data-theme="dark"] .map-list-item:hover * {
+    color: #000000 !important;
+    -webkit-text-fill-color: #000000 !important;
+}
+
+.map-list-item.selected {
+    border-color: #93c5fd;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.12);
+}
+
+.map-list-name {
+    font-weight: 700;
+    color: var(--app-text-color);
+    margin-bottom: 4px;
+}
+
+.map-list-meta {
+    font-size: 12px;
+    color: var(--app-muted-text-color);
+}
+
+.map-empty {
+    padding: 12px 6px;
+    color: var(--app-muted-text-color);
+    font-size: 13px;
+}
+
+.map-error {
+    padding: 10px 6px;
+    color: #b91c1c;
+    font-size: 13px;
+}
+
+.map-section h4 {
+    margin: 12px 0 8px;
+    font-size: 14px;
+}
+
+.map-info-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+}
+
+.map-info-item {
+    border: 1px solid var(--app-border);
+    border-radius: 10px;
+    padding: 10px;
+    background: var(--app-surface);
+}
+
+.map-info-label {
+    font-size: 12px;
+    color: var(--app-muted-text-color);
+    margin-bottom: 4px;
+}
+
+.map-info-value {
+    font-size: 13px;
+    color: var(--app-text-color);
+    font-weight: 700;
+    word-break: break-word;
+}
+
+.map-table {
+    width: 100%;
+    border-collapse: collapse;
+    border: 1px solid var(--app-border);
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+.map-table th,
+.map-table td {
+    padding: 10px;
+    border-bottom: 1px solid var(--app-border);
+    font-size: 13px;
+    text-align: left;
+}
+
+.map-table th {
+    background: #f9fafb;
+    color: var(--app-subtle-text-color);
+    font-weight: 800;
+}
+
+/* 다크 모드: 맵 상세(몬스터/NPC) 테이블 헤더/셀 배경을 다른 카드 톤과 동일하게 맞춤 */
+html[data-theme="dark"] .map-table th {
+    /* 조건문: 라이트 테마 전용 밝은 헤더 배경을 다크 톤으로 오버라이드 */
+    background: rgba(255, 255, 255, 0.06) !important;
+    color: #ffffff !important;
+    -webkit-text-fill-color: #ffffff !important;
+}
+
+html[data-theme="dark"] .map-table td {
+    /* 루프(목록 렌더)로 생기는 모든 셀 배경도 다크 톤으로 통일 */
+    background: var(--app-surface) !important;
+    color: #ffffff !important;
+    -webkit-text-fill-color: #ffffff !important;
+}
+
+.map-table tr:last-child td {
+    border-bottom: 0;
+}
+
+/* =========================
+   Maps - 몬스터 상세 패널(테이블 옆 박스)
+   - 입력/출력: 없음(CSS)
+   ========================= */
+.map-kv {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 8px;
+}
+
+.map-kv-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 14px;
+    border-radius: 8px;
+    border: 1px solid var(--app-border);
+    background: var(--app-surface);
+    transition: all 0.2s ease;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.map-kv-row:hover {
+    background: rgba(59, 130, 246, 0.05);
+    border-color: rgba(59, 130, 246, 0.3);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+    transform: translateY(-1px);
+}
+
+.map-kv-label {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--app-muted-text-color);
+    white-space: nowrap;
+    min-width: 80px;
+}
+
+.map-kv-value {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--app-text-color);
+    text-align: right;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    word-break: break-word;
+    flex: 1;
+}
+
+.map-click-row {
+    cursor: pointer;
+}
+
+.map-click-row:hover td {
+    background: rgba(59, 130, 246, 0.08);
+}
+
+.map-click-row.selected td {
+    background: rgba(59, 130, 246, 0.14);
+}
+
+/* 선택된 몬스터 표시(레이아웃을 건드리지 않도록 좌측 라인으로만 표시) */
+.map-click-row.selected td:first-child {
+    box-shadow: inset 3px 0 0 rgba(59, 130, 246, 0.85);
+}
+
+/* 몬스터 목록이 너무 길어지는 문제 방지: 테이블을 내부 스크롤로 제한 */
+.map-monster-table-wrap {
+    max-height: 320px;
+    overflow: auto;
+    border-radius: 10px;
+}
+
+/* 가운데 카드: 상세(맵 정보·몬스터·NPC) 영역만 스크롤 */
+.map-detail-card .map-card-header {
+    flex-shrink: 0;
+}
+
+.map-detail-card .map-detail {
+    flex: 1;
+    min-height: 0;
+    overflow: auto;
+}
+
+/* 우측 카드: 헤더 고정, 본문만 스크롤(페이지 스크롤 없음) */
+.map-monster-detail-card .map-card-header {
+    flex-shrink: 0;
+}
+
+.map-monster-detail-card .map-card-body {
+    flex: 1;
+    min-height: 0;
+    overflow: auto;
+}
+
+@media (max-width: 980px) {
+    .map-grid {
+        grid-template-columns: 1fr;
+    }
+    .map-monster-detail-card {
+        position: static;
+        max-height: none;
+    }
+}
+
+
+
+@media (max-width: 980px) {
+    .map-grid {
+        grid-template-columns: 1fr;
+    }
+    .map-list {
+        max-height: 360px;
+    }
+    .map-info-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* =========================================================
+   3. Footer
+========================================================= */
+.footer {
+    height: 60px;
+    border-top: 1px solid var(--app-border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    color: var(--app-muted-text-color);
+}
+
+/* =========================================================
+   4. Side Menu
+========================================================= */
+.side-menu {
+    width: 220px;
+    border-right: 1px solid var(--app-border);
+    padding: 20px;
+    background-color: var(--app-surface);
+}
+
+.menu-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.menu-list li {
+    margin-bottom: 12px;
+}
+
+.menu-list a {
+    display: block;
+    padding: 8px 12px;
+    border-radius: 4px;
+    font-size: 14px;
+    color: var(--app-text-color);
+    text-decoration: none;
+}
+
+.menu-list a:hover {
+    background-color: rgba(148, 163, 184, 0.18);
+}
+
+.menu-list a.active {
+    background-color: rgba(148, 163, 184, 0.28);
+    font-weight: bold;
+}
+
+/* =========================================================
+   5. Home Page
+========================================================= */
+.home-header {
+    margin-bottom: 30px;
+}
+
+.home-header h1 {
+    font-size: 28px;
+    margin-bottom: 8px;
+}
+
+.home-header p {
+    font-size: 14px;
+    color: #666;
+}
+
+.home-cards {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+}
+
+.home-card {
+    border: 1px solid #ddd;
+    padding: 20px;
+    border-radius: 6px;
+    background-color: #fff;
+    cursor: pointer;
+}
+
+.home-card:hover {
+    background-color: #f5f5f5;
+}
+
+/* =========================================================
+   6. Table (Shout List)
+========================================================= */
+.shout-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+    font-size: 14px;
+}
+
+.shout-table th,
+.shout-table td {
+    border: 1px solid #ddd;
+    padding: 8px 10px;
+    text-align: left;
+}
+
+.shout-table th {
+    background-color: #f2f2f2;
+    font-weight: bold;
+}
+
+.shout-table tr:nth-child(even) {
+    background-color: #fafafa;
+}
+
+/* =========================
+   다크 모드 - 고확 리스트(테이블/검색 영역)
+   ========================= */
+html[data-theme="dark"] .shout-table th,
+html[data-theme="dark"] .shout-table td {
+    border-color: var(--app-border) !important;
+}
+
+html[data-theme="dark"] .shout-table th {
+    background-color: rgba(255, 255, 255, 0.06) !important;
+}
+
+html[data-theme="dark"] .shout-table tr:nth-child(even) {
+    background-color: rgba(255, 255, 255, 0.03) !important;
+}
+
+html[data-theme="dark"] .search-box input,
+html[data-theme="dark"] .flatpickr-input {
+    background-color: var(--app-surface) !important;
+    border: 1px solid var(--app-border) !important;
+    color: #ffffff !important;
+    -webkit-text-fill-color: #ffffff !important;
+}
+
+html[data-theme="dark"] .search-box input::placeholder,
+html[data-theme="dark"] .flatpickr-input::placeholder {
+    color: rgba(255, 255, 255, 0.75) !important;
+}
+
+html[data-theme="dark"] .shout-filter-card {
+    border-color: rgba(255, 255, 255, 0.18) !important;
+    background: var(--app-surface) !important;
+    box-shadow: 0 20px 40px -34px rgba(0, 0, 0, 0.70) !important;
+}
+
+html[data-theme="dark"] .shout-time-controls {
+    border-color: var(--app-border) !important;
+    background: var(--app-surface) !important;
+}
+
+/* 다크 모드: 시작 시간/종료 시간 버튼(.btn-soft) 배경/글자색 통일 */
+html[data-theme="dark"] .shout-time-controls .btn-soft {
+    background: rgba(255, 255, 255, 0.08) !important;
+    border-color: rgba(255, 255, 255, 0.18) !important;
+    color: #ffffff !important;
+    -webkit-text-fill-color: #ffffff !important;
+    box-shadow: 0 10px 24px -18px rgba(0, 0, 0, 0.65) !important;
+}
+
+html[data-theme="dark"] .shout-time-controls .btn-soft:hover:not(:disabled) {
+    background: rgba(255, 255, 255, 0.12) !important;
+    border-color: rgba(255, 255, 255, 0.28) !important;
+    color: #ffffff !important;
+    -webkit-text-fill-color: #ffffff !important;
+}
+
+.shout-message {
+    max-width: 400px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* =========================================================
+   7. Search Box
+========================================================= */
+.search-box {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 16px;
+    align-items: center;
+}
+
+.search-box input,
+.flatpickr-input {
+    height: 36px;
+    padding: 0 10px;
+    font-size: 13px;
+}
+
+.search-box input[type="time"] {
+    width: 120px;
+}
+/* =========================================================
+   8. Pagination
+========================================================= */
+.pagination {
+    margin-top: 20px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+/* =========================
+   공통 버튼(부드러운 UI)
+   ========================= */
+.btn {
+    height: 38px;
+    padding: 0 14px;
+    border-radius: 12px;
+    border: 1px solid transparent;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: transform 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+    user-select: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+}
+
+.btn:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
+
+.btn:active:not(:disabled) {
+    transform: translateY(1px);
+}
+
+.btn-soft {
+    background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+    border-color: #e5e7eb;
+    color: var(--app-text-color);
+    box-shadow: 0 6px 16px -12px rgba(0, 0, 0, 0.25);
+}
+
+.btn-soft:hover:not(:disabled) {
+    background: linear-gradient(180deg, #ffffff 0%, #eef2ff 100%);
+    border-color: #c7d2fe;
+    box-shadow: 0 10px 24px -16px rgba(59, 130, 246, 0.45);
+    transform: translateY(-1px);
+}
+
+.btn-outline {
+    background-color: #ffffff;
+    border-color: #e5e7eb;
+    color: var(--app-subtle-text-color);
+}
+
+.btn-outline:hover:not(:disabled) {
+    background-color: #f9fafb;
+    border-color: #d1d5db;
+    transform: translateY(-1px);
+}
+
+.btn-page {
+    min-width: 40px;
+    padding: 0 12px;
+    background-color: #ffffff;
+    border-color: #e5e7eb;
+    color: var(--app-subtle-text-color);
+}
+
+.btn-page:hover:not(:disabled) {
+    background-color: #f9fafb;
+    border-color: #cbd5e1;
+    transform: translateY(-1px);
+}
+
+.btn-page.active {
+    background: linear-gradient(180deg, #3b82f6 0%, #2563eb 100%);
+    color: #ffffff;
+    border-color: #1d4ed8;
+    box-shadow:
+        0 0 0 3px rgba(59, 130, 246, 0.20),
+        0 12px 26px -18px rgba(37, 99, 235, 0.60);
+}
+
+/* Primary 버튼(검색 버튼 등) */
+.btn-primary {
+    background: linear-gradient(180deg, #3b82f6 0%, #2563eb 100%);
+    color: #ffffff;
+    border-color: #1d4ed8;
+    box-shadow: 0 12px 26px -18px rgba(37, 99, 235, 0.65);
+}
+
+.btn-primary:hover:not(:disabled) {
+    background: linear-gradient(180deg, #2563eb 0%, #1d4ed8 100%);
+    box-shadow: 0 18px 34px -22px rgba(37, 99, 235, 0.75);
+    transform: translateY(-1px);
+}
+
+/* =========================================================
+   ShoutList - 필터 카드(닉네임/내용/날짜/시간/검색)
+========================================================= */
+.shout-filter-card {
+    width: 100%;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 12px;
+    padding: 14px;
+    border-radius: 16px;
+    border: 1px solid rgba(148, 163, 184, 0.35);
+    background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+    box-shadow: 0 20px 40px -34px rgba(0, 0, 0, 0.35);
+}
+
+/* 필터 카드 내부 input들을 조금 더 부드럽게 */
+.shout-filter-card .layout-input {
+    border-radius: 12px;
+    border-color: rgba(148, 163, 184, 0.55);
+    background: #ffffff;
+    transition: box-shadow 0.15s ease, border-color 0.15s ease;
+}
+
+.shout-filter-card .layout-input:focus {
+    outline: none;
+    border-color: rgba(59, 130, 246, 0.65);
+    box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.15);
+}
+
+/* =========================================================
+   ShoutList - 시간 영역(부드러운 스타일)
+========================================================= */
+.shout-time-controls {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 10px 12px;
+    border: 1px solid #e5e7eb;
+    border-radius: 14px;
+    background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+    box-shadow: 0 12px 28px -24px rgba(0, 0, 0, 0.35);
+}
+
+.shout-time-range {
+    font-weight: 900;
+    letter-spacing: 0.2px;
+    color: #111827;
+    padding: 8px 10px;
+    border-radius: 12px;
+    background: radial-gradient(120% 120% at 10% 0%, rgba(59, 130, 246, 0.18) 0%, rgba(255, 255, 255, 0) 60%);
+    border: 1px solid rgba(59, 130, 246, 0.20);
+}
+
+.shout-time-actions {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+/* =========================================================
+   EquipStats - 캐릭터 장착/능력치 화면
+========================================================= */
+.equip-page {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.equip-header {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.equip-title-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.equip-level {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 10px;
+    border-radius: 14px;
+    border: 1px solid rgba(148, 163, 184, 0.35);
+    background: #ffffff;
+    box-shadow: 0 10px 18px -18px rgba(0, 0, 0, 0.35);
+}
+
+.equip-level-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.equip-level-hint {
+    font-size: 12px;
+    font-weight: 800;
+    color: #6b7280;
+}
+
+.equip-level-label {
+    font-size: 12px;
+    font-weight: 900;
+    color: #111827;
+}
+
+.equip-level-input {
+    width: 84px;
+    height: 34px;
+    border-radius: 12px;
+    border: 1px solid rgba(148, 163, 184, 0.45);
+    padding: 0 10px;
+    font-size: 13px;
+    font-weight: 900;
+    color: #111827;
+    background: #ffffff;
+}
+
+.equip-level-input:focus {
+    outline: none;
+    border-color: rgba(59, 130, 246, 0.65);
+    box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.15);
+}
+
+.equip-title {
+    margin: 0;
+    font-size: 22px;
+    font-weight: 900;
+    color: #111827;
+}
+
+.equip-subtitle {
+    margin: 0;
+    font-size: 13px;
+    color: #6b7280;
+}
+
+.equip-top {
+    display: grid;
+    /* 100% 배율에서 스크롤이 생기지 않도록 조금 더 컴팩트하게 */
+    grid-template-columns: 320px 1fr;
+    gap: 12px;
+    align-items: start;
+}
+
+.equip-right {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 14px;
+}
+
+.equip-card {
+    border-radius: 16px;
+    border: 1px solid rgba(148, 163, 184, 0.35);
+    background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+    box-shadow: 0 20px 40px -34px rgba(0, 0, 0, 0.35);
+    padding: 12px;
+}
+
+.equip-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+}
+
+.equip-card-header h3 {
+    margin: 0;
+    font-size: 15px;
+    font-weight: 900;
+    color: #111827;
+}
+
+.equip-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 6px 10px;
+    border-radius: 999px;
+    background: rgba(59, 130, 246, 0.10);
+    color: #1d4ed8;
+    font-size: 12px;
+    font-weight: 800;
+    border: 1px solid rgba(59, 130, 246, 0.18);
+}
+
+.equip-gender {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 12px;
+}
+
+.equip-avatar {
+    width: 100%;
+    border-radius: 14px;
+    overflow: hidden;
+    border: 1px solid rgba(148, 163, 184, 0.35);
+    background: #ffffff;
+    box-shadow: 0 18px 36px -30px rgba(0, 0, 0, 0.40);
+    margin-bottom: 12px;
+}
+
+.equip-avatar img {
+    width: 100%;
+    height: auto;
+    display: block;
+    /* 이미지 높이 제한으로 전체 높이 줄이기 */
+    max-height: 280px;
+    object-fit: cover;
+}
+
+.equip-slots {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 10px;
+}
+
+.equip-slot {
+    text-align: left;
+    border-radius: 14px;
+    border: 1px solid rgba(148, 163, 184, 0.35);
+    background: #ffffff;
+    padding: 12px;
+    cursor: pointer;
+    transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+}
+
+.equip-slot:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 16px 28px -24px rgba(0, 0, 0, 0.35);
+    border-color: rgba(59, 130, 246, 0.35);
+}
+
+.equip-slot.selected {
+    border-color: rgba(59, 130, 246, 0.55);
+    box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.12);
+}
+
+.equip-slot-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+}
+
+.equip-slot-name {
+    font-weight: 900;
+    color: #111827;
+    font-size: 13px;
+}
+
+.equip-slot-unequip {
+    font-size: 12px;
+    font-weight: 800;
+    color: #ef4444;
+    padding: 4px 8px;
+    border-radius: 999px;
+    border: 1px solid rgba(239, 68, 68, 0.25);
+    background: rgba(239, 68, 68, 0.06);
+}
+
+.equip-slot-item {
+    margin-top: 8px;
+    font-size: 13px;
+    color: #374151;
+    opacity: 0.95;
+}
+
+.equip-base-stats {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+}
+
+.equip-stat-input {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    border: 1px solid rgba(148, 163, 184, 0.35);
+    border-radius: 14px;
+    padding: 10px 12px;
+    background: #ffffff;
+}
+
+.equip-stat-stepper {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.equip-step-btn {
+    height: 34px;
+    width: 38px;
+    padding: 0;
+    border-radius: 12px;
+    font-weight: 900;
+}
+
+.equip-stat-label {
+    font-size: 13px;
+    font-weight: 900;
+    color: #111827;
+}
+
+.equip-stat-field {
+    /* 능력치 입력 폭 줄이기 */
+    width: 58px;
+    height: 34px;
+    border-radius: 12px;
+    border: 1px solid rgba(148, 163, 184, 0.45);
+    padding: 0 10px;
+    font-size: 13px;
+    font-weight: 900;
+    color: #111827;
+    background: #ffffff;
+    text-align: center;
+}
+
+.equip-stat-field:focus {
+    outline: none;
+    border-color: rgba(59, 130, 246, 0.65);
+    box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.15);
+}
+
+.equip-inventory {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+    /* 목록이 길어져도 페이지 전체 스크롤 대신 내부 스크롤로 처리 */
+    max-height: 300px;
+    overflow: auto;
+    padding-right: 2px;
+}
+
+.equip-item {
+    text-align: left;
+    border-radius: 14px;
+    border: 1px solid rgba(148, 163, 184, 0.35);
+    background: #ffffff;
+    padding: 12px;
+    cursor: pointer;
+    transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+}
+
+.equip-item:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 16px 28px -24px rgba(0, 0, 0, 0.35);
+    border-color: rgba(59, 130, 246, 0.35);
+}
+
+.equip-item.selected {
+    border-color: rgba(59, 130, 246, 0.55);
+    box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.12);
+}
+
+.equip-item-name {
+    font-weight: 900;
+    color: #111827;
+    font-size: 13px;
+}
+
+.equip-item-meta {
+    margin-top: 6px;
+    font-size: 12px;
+    color: #6b7280;
+}
+
+.equip-actions {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-top: 12px;
+}
+
+.equip-hint {
+    font-size: 12px;
+    color: #6b7280;
+}
+
+.equip-stats {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+}
+
+.equip-stat {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    border: 1px solid rgba(148, 163, 184, 0.35);
+    border-radius: 14px;
+    padding: 10px 12px;
+    background: #ffffff;
+}
+
+.equip-stat-name {
+    font-size: 13px;
+    font-weight: 900;
+    color: #111827;
+}
+
+.equip-stat-value {
+    font-size: 13px;
+    font-weight: 900;
+    color: #2563eb;
+}
+
+.equip-empty {
+    padding: 14px 12px;
+    border-radius: 14px;
+    background: rgba(148, 163, 184, 0.10);
+    border: 1px dashed rgba(148, 163, 184, 0.45);
+    color: #6b7280;
+    font-size: 13px;
+}
+
+.equip-skilltree-placeholder {
+    border-radius: 16px;
+    border: 1px solid rgba(148, 163, 184, 0.35);
+    background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+    box-shadow: 0 20px 40px -34px rgba(0, 0, 0, 0.35);
+    padding: 14px;
+}
+
+.equip-skilltree-title {
+    font-size: 15px;
+    font-weight: 900;
+    color: #111827;
+}
+
+.equip-skilltree-desc {
+    margin-top: 6px;
+    font-size: 13px;
+    color: #6b7280;
+}
+
+/* =========================================================
+   EquipStats - 스킬 트리
+========================================================= */
+.equip-skilltree {
+    border-radius: 16px;
+    border: 1px solid rgba(148, 163, 184, 0.35);
+    background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+    box-shadow: 0 20px 40px -34px rgba(0, 0, 0, 0.35);
+    padding: 12px;
+}
+
+.equip-skilltree-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 12px;
+    margin-bottom: 12px;
+}
+
+.equip-skilltree-meta {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+}
+
+.equip-skilltree-points {
+    font-size: 13px;
+    font-weight: 900;
+    color: #111827;
+    padding: 6px 10px;
+    border-radius: 999px;
+    border: 1px solid rgba(59, 130, 246, 0.18);
+    background: rgba(59, 130, 246, 0.08);
+}
+
+.equip-skilltree-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+}
+
+.equip-skilltree-card {
+    border-radius: 16px;
+    border: 1px solid rgba(148, 163, 184, 0.35);
+    background: #ffffff;
+    padding: 12px;
+}
+
+.equip-skilltree-card-title {
+    font-size: 14px;
+    font-weight: 900;
+    color: #111827;
+    margin-bottom: 10px;
+}
+
+.equip-skilltree-nodes {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 10px;
+}
+
+.equip-skill-node {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 10px;
+    align-items: center;
+}
+
+.equip-skill-node-main {
+    text-align: left;
+    border-radius: 14px;
+    border: 1px solid rgba(148, 163, 184, 0.35);
+    background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+    padding: 10px;
+    cursor: pointer;
+    transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+}
+
+.equip-skill-node-main:hover:not(:disabled) {
+    transform: translateY(-1px);
+    box-shadow: 0 16px 28px -24px rgba(0, 0, 0, 0.35);
+    border-color: rgba(59, 130, 246, 0.35);
+}
+
+.equip-skill-node-main:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+}
+
+.equip-skill-name {
+    font-size: 13px;
+    font-weight: 900;
+    color: #111827;
+}
+
+.equip-skill-level {
+    margin-top: 6px;
+    font-size: 12px;
+    color: #6b7280;
+    font-weight: 800;
+}
+
+.equip-skill-node-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.equip-skill-node-actions .btn {
+    height: 34px;
+    width: 38px;
+    padding: 0;
+    border-radius: 12px;
+    font-weight: 900;
+}
+
+/* =========================
+   다크 모드 - EquipStats(아이템 능력치 장착) 화면
+   - 입력/출력: 없음(CSS 테마 오버라이드)
+   ========================= */
+html[data-theme="dark"] .equip-page .equip-level,
+html[data-theme="dark"] .equip-page .equip-card,
+html[data-theme="dark"] .equip-page .equip-avatar,
+html[data-theme="dark"] .equip-page .equip-slot,
+html[data-theme="dark"] .equip-page .equip-stat-input,
+html[data-theme="dark"] .equip-page .equip-item,
+html[data-theme="dark"] .equip-page .equip-stat,
+html[data-theme="dark"] .equip-page .equip-skilltree-placeholder,
+html[data-theme="dark"] .equip-page .equip-skilltree,
+html[data-theme="dark"] .equip-page .equip-skilltree-card,
+html[data-theme="dark"] .equip-page .equip-skill-node-main {
+    background: var(--app-surface) !important;
+    border-color: var(--app-border) !important;
+    box-shadow: 0 20px 40px -34px rgba(0, 0, 0, 0.70) !important;
+}
+
+html[data-theme="dark"] .equip-page .equip-slot:hover,
+html[data-theme="dark"] .equip-page .equip-item:hover,
+html[data-theme="dark"] .equip-page .equip-skill-node-main:hover:not(:disabled) {
+    /* 조건문: hover 상태에서는 살짝 밝게(그러나 배경은 유지) */
+    background: rgba(255, 255, 255, 0.06) !important;
+}
+
+html[data-theme="dark"] .equip-page .equip-level-input,
+html[data-theme="dark"] .equip-page .equip-stat-field {
+    /* 입력창 텍스트가 검정으로 떨어지지 않도록 강제 */
+    background: rgba(255, 255, 255, 0.06) !important;
+    border-color: var(--app-border) !important;
+    color: #ffffff !important;
+    -webkit-text-fill-color: #ffffff !important;
+}
+
+html[data-theme="dark"] .equip-page .equip-level-input::placeholder,
+html[data-theme="dark"] .equip-page .equip-stat-field::placeholder {
+    color: rgba(255, 255, 255, 0.75) !important;
+}
+
+html[data-theme="dark"] .equip-page .btn-soft,
+html[data-theme="dark"] .equip-page .btn-outline {
+    background: rgba(255, 255, 255, 0.08) !important;
+    border-color: rgba(255, 255, 255, 0.18) !important;
+    color: #ffffff !important;
+    -webkit-text-fill-color: #ffffff !important;
+}
+
+html[data-theme="dark"] .equip-page .btn-soft:hover:not(:disabled),
+html[data-theme="dark"] .equip-page .btn-outline:hover:not(:disabled) {
+    background: rgba(255, 255, 255, 0.12) !important;
+    border-color: rgba(255, 255, 255, 0.28) !important;
+}
+
+html[data-theme="dark"] .equip-page .equip-badge {
+    background: rgba(255, 255, 255, 0.08) !important;
+    border-color: rgba(255, 255, 255, 0.18) !important;
+    color: #ffffff !important;
+    -webkit-text-fill-color: #ffffff !important;
+}
+
+/* =========================================================
+   공통 모달(아이템 선택 팝업)
+========================================================= */
+.modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.45);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 18px;
+    z-index: 9999;
+}
+
+.modal-card {
+    width: min(980px, 100%);
+    max-height: min(88vh, 900px);
+    overflow: hidden;
+    border-radius: 18px;
+    border: 1px solid rgba(148, 163, 184, 0.35);
+    background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+    box-shadow: 0 40px 80px -60px rgba(0, 0, 0, 0.65);
+    display: flex;
+    flex-direction: column;
+}
+
+/* 다크 모드: 공통 모달(아이템 선택 팝업) 배경/텍스트 통일 */
+html[data-theme="dark"] .modal-card {
+    background: var(--app-surface) !important;
+    border-color: var(--app-border) !important;
+    box-shadow: 0 40px 80px -60px rgba(0, 0, 0, 0.85) !important;
+}
+
+.modal-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 14px 14px 10px 14px;
+    border-bottom: 1px solid rgba(148, 163, 184, 0.25);
+}
+
+html[data-theme="dark"] .modal-header {
+    border-bottom-color: rgba(255, 255, 255, 0.12) !important;
+}
+
+.modal-title {
+    font-size: 16px;
+    font-weight: 900;
+    color: #111827;
+}
+
+html[data-theme="dark"] .modal-title {
+    color: #ffffff !important;
+    -webkit-text-fill-color: #ffffff !important;
+}
+
+.modal-subtitle {
+    margin-top: 4px;
+    font-size: 12px;
+    color: #6b7280;
+    font-weight: 700;
+}
+
+html[data-theme="dark"] .modal-subtitle {
+    color: rgba(255, 255, 255, 0.75) !important;
+    -webkit-text-fill-color: rgba(255, 255, 255, 0.75) !important;
+}
+
+html[data-theme="dark"] .modal-card input,
+html[data-theme="dark"] .modal-card select,
+html[data-theme="dark"] .modal-card textarea {
+    background: rgba(255, 255, 255, 0.06) !important;
+    border-color: var(--app-border) !important;
+    color: #ffffff !important;
+    -webkit-text-fill-color: #ffffff !important;
+}
+
+html[data-theme="dark"] .modal-card input::placeholder,
+html[data-theme="dark"] .modal-card textarea::placeholder {
+    color: rgba(255, 255, 255, 0.75) !important;
+}
+
+.modal-controls {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 14px;
+}
+
+.modal-error {
+    margin: 0 14px 10px 14px;
+    padding: 10px 12px;
+    border-radius: 14px;
+    background: rgba(239, 68, 68, 0.08);
+    border: 1px solid rgba(239, 68, 68, 0.18);
+    color: #b91c1c;
+    font-size: 13px;
+    font-weight: 800;
+}
+
+.modal-list {
+    padding: 0 14px 14px 14px;
+    overflow: auto;
+}
+
+.modal-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+}
+
+.modal-item {
+    text-align: left;
+    border-radius: 14px;
+    border: 1px solid rgba(148, 163, 184, 0.35);
+    background: #ffffff;
+    padding: 12px;
+    cursor: pointer;
+    transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+}
+
+html[data-theme="dark"] .modal-item {
+    background: rgba(255, 255, 255, 0.06) !important;
+    border-color: var(--app-border) !important;
+    box-shadow: 0 16px 28px -24px rgba(0, 0, 0, 0.70) !important;
+}
+
+.modal-item:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 16px 28px -24px rgba(0, 0, 0, 0.35);
+    border-color: rgba(59, 130, 246, 0.35);
+}
+
+html[data-theme="dark"] .modal-item:hover {
+    background: rgba(255, 255, 255, 0.10) !important;
+    border-color: rgba(255, 255, 255, 0.28) !important;
+}
+
+.modal-item.selected {
+    border-color: rgba(59, 130, 246, 0.55);
+    box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.12);
+}
+
+.modal-item-name {
+    font-size: 13px;
+    font-weight: 900;
+    color: #111827;
+}
+
+.modal-item-meta {
+    margin-top: 6px;
+    font-size: 12px;
+    color: #6b7280;
+    font-weight: 700;
+}
+
+.modal-footer {
+    padding: 10px 14px 14px 14px;
+    border-top: 1px solid rgba(148, 163, 184, 0.25);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+html[data-theme="dark"] .modal-footer {
+    border-top-color: rgba(255, 255, 255, 0.12) !important;
+}
+
+@media (max-width: 800px) {
+    .modal-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 1100px) {
+    .equip-top {
+        grid-template-columns: 1fr;
+    }
+
+    .equip-inventory {
+        grid-template-columns: 1fr;
+    }
+
+    .equip-stats {
+        grid-template-columns: 1fr;
+    }
+
+    .equip-skilltree-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* =========================================================
+   9. Flatpickr (3rd-party)
+========================================================= */
+.flatpickr-input {
+    min-width: 220px;
+}
+
+/* =========================
+   shoutList – TimePicker 보정
+   ========================= */
+
+.layout-filter-row.shout-filter {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 16px;
+}
+
+.layout-input {
+    height: 40px;
+    padding: 0 10px;
+    font-size: 13px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    min-width: 160px;
+    background-color: #fff;
+}
+
+.flatpickr-input.layout-input {
+    min-width: 220px;
+}
+
+.layout-search-btn {
+    height: 40px;
+    padding: 0 18px;
+    border: none;
+    border-radius: 4px;
+    background-color: #3f51b5;
+    color: #fff;
+    font-size: 13px;
+    cursor: pointer;
+}
+
+.layout-search-btn:hover {
+    background-color: #2c3a9f;
+}
+
+/* =========================================================
+   MUI TimePicker → Text Box Trigger Style
+========================================================= */
+
+.MuiOutlinedInput-root {
+    height: 40px;
+    background-color: #fff;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.MuiOutlinedInput-notchedOutline {
+    border-color: #ccc;
+}
+
+.MuiOutlinedInput-root:hover .MuiOutlinedInput-notchedOutline {
+    border-color: #999;
+}
+
+.MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline {
+    border-color: #3f51b5;
+    border-width: 1px;
+}
+
+.MuiOutlinedInput-root input {
+    cursor: pointer;
+}
+
+/* 아이콘 / adornment 제거 */
+.MuiInputAdornment-root {
+    display: none;
+}
+
+/* label 제거 */
+.MuiInputLabel-root {
+    display: none;
+}
+
+/* =========================================================
+   Clock Popup (minimal)
+========================================================= */
+
+.MuiClock-root {
+    width: 260px;
+    height: 260px;
+}
+
+.MuiClockNumber-root {
+    font-size: 14px;
+    opacity: 0.6;
+}
+
+.MuiClockNumber-root.Mui-selected {
+    opacity: 1;
+    background-color: #3f51b5;
+    color: #fff;
+}
+
+.MuiClockPointer-root {
+    background-color: #3f51b5;
+}
+
+/* =========================================================
+   MUI TimePicker AM/PM 버튼 스타일 - 최종 강력한 선택자
+========================================================= */
+
+/* AM/PM 버튼 컨테이너 */
+.MuiClockAmPm-root {
+    gap: 8px !important;
+}
+
+/* MUI Dialog/Popover/Popper 내부의 모든 버튼 - 기본 스타일 (배경색 없음) */
+.MuiDialog-root .MuiClockAmPm-root button,
+.MuiPopover-root .MuiClockAmPm-root button,
+.MuiPopper-root .MuiClockAmPm-root button,
+.MuiModal-root .MuiClockAmPm-root button,
+.MuiDialog-root .MuiToggleButton-root,
+.MuiPopover-root .MuiToggleButton-root,
+.MuiPopper-root .MuiToggleButton-root,
+.MuiModal-root .MuiToggleButton-root,
+[role="dialog"] .MuiToggleButton-root,
+[role="presentation"] .MuiToggleButton-root {
+    border-radius: 8px !important;
+    padding: 8px 16px !important;
+    font-weight: 700 !important;
+    font-size: 0.95rem !important;
+    transition: all 0.2s ease-in-out !important;
+    min-width: 60px !important;
+    color: #6b7280 !important; /* 회색 텍스트 */
+    background-color: transparent !important; /* 배경색 없음 */
+    border: 2px solid transparent !important; /* 테두리 없음 */
+}
+
+/* MUI Dialog/Popover 내부 버튼 hover (미선택) */
+.MuiDialog-root .MuiClockAmPm-root button:hover:not(.Mui-selected),
+.MuiPopover-root .MuiClockAmPm-root button:hover:not(.Mui-selected),
+.MuiPopper-root .MuiClockAmPm-root button:hover:not(.Mui-selected),
+.MuiModal-root .MuiClockAmPm-root button:hover:not(.Mui-selected),
+.MuiDialog-root .MuiToggleButton-root:hover:not(.Mui-selected),
+.MuiPopover-root .MuiToggleButton-root:hover:not(.Mui-selected),
+.MuiPopper-root .MuiToggleButton-root:hover:not(.Mui-selected),
+.MuiModal-root .MuiToggleButton-root:hover:not(.Mui-selected) {
+    background-color: #f3f4f6 !important; /* 연한 회색 배경 */
+    color: #4b5563 !important; /* 조금 더 진한 회색 텍스트 */
+}
+
+/* 선택된 AM/PM 버튼 - 진한 파란색 배경 */
+.MuiDialog-root .MuiClockAmPm-root button.Mui-selected,
+.MuiPopover-root .MuiClockAmPm-root button.Mui-selected,
+.MuiPopper-root .MuiClockAmPm-root button.Mui-selected,
+.MuiModal-root .MuiClockAmPm-root button.Mui-selected,
+.MuiDialog-root .MuiToggleButton-root.Mui-selected,
+.MuiPopover-root .MuiToggleButton-root.Mui-selected,
+.MuiPopper-root .MuiToggleButton-root.Mui-selected,
+.MuiModal-root .MuiToggleButton-root.Mui-selected,
+[role="dialog"] .MuiToggleButton-root.Mui-selected,
+[role="presentation"] .MuiToggleButton-root.Mui-selected {
+    background-color: #3b82f6 !important; /* 진한 파란색 */
+    color: #ffffff !important; /* 흰색 텍스트 */
+    border: 3px solid #1d4ed8 !important; /* 더 진한 파란색 테두리(두껍게) */
+    /* 선택됨을 확실히 보여주는 '링(글로우)' + 그림자 */
+    box-shadow:
+        0 0 0 4px rgba(59, 130, 246, 0.35),
+        0 6px 12px -2px rgba(37, 99, 235, 0.45),
+        0 2px 6px -2px rgba(37, 99, 235, 0.25) !important;
+    transform: scale(1.05) !important;
+    font-weight: 900 !important;
+    font-size: 1rem !important;
+}
+
+/* 선택된 AM/PM 버튼 hover - 더 진한 파란색 (선택이 흐려지지 않게 유지) */
+.MuiDialog-root .MuiClockAmPm-root button.Mui-selected:hover,
+.MuiPopover-root .MuiClockAmPm-root button.Mui-selected:hover,
+.MuiPopper-root .MuiClockAmPm-root button.Mui-selected:hover,
+.MuiModal-root .MuiClockAmPm-root button.Mui-selected:hover,
+.MuiDialog-root .MuiToggleButton-root.Mui-selected:hover,
+.MuiPopover-root .MuiToggleButton-root.Mui-selected:hover,
+.MuiPopper-root .MuiToggleButton-root.Mui-selected:hover,
+.MuiModal-root .MuiToggleButton-root.Mui-selected:hover {
+    background-color: #2563eb !important; /* 더 진한 파란색 */
+    box-shadow:
+        0 0 0 4px rgba(37, 99, 235, 0.40),
+        0 10px 16px -6px rgba(37, 99, 235, 0.55),
+        0 4px 10px -6px rgba(37, 99, 235, 0.35) !important;
+    transform: scale(1.08) !important;
+}
+
+/* 모든 가능한 AM/PM 버튼 선택자 - 기본 스타일 (배경색 없음) */
+.MuiClockAmPm-root button,
+.MuiClockAmPm-root .MuiButtonBase-root,
+.MuiClockAmPm-root .MuiToggleButton-root,
+.MuiToggleButton-root[aria-label*="AM"],
+.MuiToggleButton-root[aria-label*="PM"],
+.MuiButtonBase-root[aria-label*="AM"],
+.MuiButtonBase-root[aria-label*="PM"],
+button[aria-label*="AM"],
+button[aria-label*="PM"],
+.MuiPickersArrowSwitcher-root + div button,
+.MuiPickersArrowSwitcher-root + div .MuiButtonBase-root,
+.MuiPickersArrowSwitcher-root + div .MuiToggleButton-root {
+    border-radius: 8px !important;
+    padding: 8px 16px !important;
+    font-weight: 700 !important;
+    font-size: 0.95rem !important;
+    transition: all 0.2s ease-in-out !important;
+    min-width: 60px !important;
+    
+    /* 기본(미선택) 상태 - 배경색 없음 */
+    color: #6b7280 !important; /* 회색 텍스트 */
+    background-color: transparent !important; /* 배경색 없음 */
+    border: 2px solid transparent !important; /* 테두리 없음 */
+}
+
+/* AM/PM 버튼 hover (미선택) */
+.MuiClockAmPm-root button:hover:not(.Mui-selected),
+.MuiClockAmPm-root .MuiButtonBase-root:hover:not(.Mui-selected),
+.MuiClockAmPm-root .MuiToggleButton-root:hover:not(.Mui-selected),
+.MuiToggleButton-root[aria-label*="AM"]:hover:not(.Mui-selected),
+.MuiToggleButton-root[aria-label*="PM"]:hover:not(.Mui-selected),
+.MuiButtonBase-root[aria-label*="AM"]:hover:not(.Mui-selected),
+.MuiButtonBase-root[aria-label*="PM"]:hover:not(.Mui-selected),
+button[aria-label*="AM"]:hover:not(.Mui-selected),
+button[aria-label*="PM"]:hover:not(.Mui-selected) {
+    background-color: #f3f4f6 !important; /* 연한 회색 배경 */
+    color: #4b5563 !important; /* 조금 더 진한 회색 텍스트 */
+}
+
+/* 선택된 AM/PM 버튼 - 진한 파란색 배경 */
+.MuiClockAmPm-root button.Mui-selected,
+.MuiClockAmPm-root .MuiButtonBase-root.Mui-selected,
+.MuiClockAmPm-root .MuiToggleButton-root.Mui-selected,
+.MuiClockAmPm-root button[aria-pressed="true"],
+.MuiClockAmPm-root .MuiButtonBase-root[aria-pressed="true"],
+.MuiClockAmPm-root .MuiToggleButton-root[aria-pressed="true"],
+.MuiToggleButton-root.Mui-selected[aria-label*="AM"],
+.MuiToggleButton-root.Mui-selected[aria-label*="PM"],
+.MuiToggleButton-root[aria-pressed="true"][aria-label*="AM"],
+.MuiToggleButton-root[aria-pressed="true"][aria-label*="PM"],
+.MuiButtonBase-root.Mui-selected[aria-label*="AM"],
+.MuiButtonBase-root.Mui-selected[aria-label*="PM"],
+.MuiButtonBase-root[aria-pressed="true"][aria-label*="AM"],
+.MuiButtonBase-root[aria-pressed="true"][aria-label*="PM"],
+button.Mui-selected[aria-label*="AM"],
+button.Mui-selected[aria-label*="PM"],
+.MuiClockAmPm-root button[aria-selected="true"],
+.MuiClockAmPm-root .MuiButtonBase-root[aria-selected="true"],
+.MuiClockAmPm-root .MuiToggleButton-root[aria-selected="true"],
+.MuiPickersArrowSwitcher-root + div button.Mui-selected,
+.MuiPickersArrowSwitcher-root + div .MuiButtonBase-root.Mui-selected,
+.MuiPickersArrowSwitcher-root + div .MuiToggleButton-root.Mui-selected {
+    background-color: #3b82f6 !important; /* 진한 파란색 */
+    color: #ffffff !important; /* 흰색 텍스트 */
+    border: 3px solid #1d4ed8 !important; /* 더 진한 파란색 테두리(두껍게) */
+    box-shadow:
+        0 0 0 4px rgba(59, 130, 246, 0.35),
+        0 6px 12px -2px rgba(37, 99, 235, 0.45),
+        0 2px 6px -2px rgba(37, 99, 235, 0.25) !important;
+    transform: scale(1.05) !important; /* 약간 확대 */
+    font-weight: 900 !important; /* 더 굵은 폰트 */
+    font-size: 1rem !important; /* 약간 큰 폰트 */
+}
+
+/* 선택된 AM/PM 버튼 hover - 더 진한 파란색 */
+.MuiClockAmPm-root button.Mui-selected:hover,
+.MuiClockAmPm-root .MuiButtonBase-root.Mui-selected:hover,
+.MuiClockAmPm-root .MuiToggleButton-root.Mui-selected:hover,
+.MuiToggleButton-root.Mui-selected[aria-label*="AM"]:hover,
+.MuiToggleButton-root.Mui-selected[aria-label*="PM"]:hover,
+.MuiButtonBase-root.Mui-selected[aria-label*="AM"]:hover,
+.MuiButtonBase-root.Mui-selected[aria-label*="PM"]:hover,
+button.Mui-selected[aria-label*="AM"]:hover,
+button.Mui-selected[aria-label*="PM"]:hover {
+    background-color: #2563eb !important; /* 더 진한 파란색 */
+    box-shadow:
+        0 0 0 4px rgba(37, 99, 235, 0.40),
+        0 10px 16px -6px rgba(37, 99, 235, 0.55),
+        0 4px 10px -6px rgba(37, 99, 235, 0.35) !important;
+    transform: scale(1.08) !important; /* 더 확대 */
+}
+
+/* 추가: MUI Popover/Popper 내부의 모든 ToggleButton 타겟팅 */
+.MuiPopover-root .MuiToggleButton-root,
+.MuiPopper-root .MuiToggleButton-root,
+.MuiModal-root .MuiToggleButton-root {
+    border-radius: 8px !important;
+    padding: 8px 16px !important;
+    font-weight: 700 !important;
+    font-size: 0.95rem !important;
+    transition: all 0.2s ease-in-out !important;
+    min-width: 60px !important;
+    /* 기본(미선택) 상태 - 배경색 없음 */
+    color: #6b7280 !important;
+    background-color: transparent !important;
+    border: 2px solid transparent !important;
+}
+
+.MuiPopover-root .MuiToggleButton-root:hover:not(.Mui-selected),
+.MuiPopper-root .MuiToggleButton-root:hover:not(.Mui-selected),
+.MuiModal-root .MuiToggleButton-root:hover:not(.Mui-selected) {
+    background-color: #f3f4f6 !important; /* 연한 회색 배경 */
+    color: #4b5563 !important; /* 조금 더 진한 회색 텍스트 */
+}
+
+.MuiPopover-root .MuiToggleButton-root.Mui-selected,
+.MuiPopper-root .MuiToggleButton-root.Mui-selected,
+.MuiModal-root .MuiToggleButton-root.Mui-selected,
+.MuiPopover-root .MuiToggleButton-root[aria-pressed="true"],
+.MuiPopper-root .MuiToggleButton-root[aria-pressed="true"],
+.MuiModal-root .MuiToggleButton-root[aria-pressed="true"] {
+    background-color: #3b82f6 !important; /* 진한 파란색 */
+    color: #ffffff !important; /* 흰색 텍스트 */
+    border: 3px solid #1d4ed8 !important; /* 더 진한 파란색 테두리(두껍게) */
+    box-shadow:
+        0 0 0 4px rgba(59, 130, 246, 0.35),
+        0 6px 12px -2px rgba(37, 99, 235, 0.45),
+        0 2px 6px -2px rgba(37, 99, 235, 0.25) !important;
+    transform: scale(1.05) !important;
+    font-weight: 900 !important;
+    font-size: 1rem !important;
+}
+
+.MuiPopover-root .MuiToggleButton-root.Mui-selected:hover,
+.MuiPopper-root .MuiToggleButton-root.Mui-selected:hover,
+.MuiModal-root .MuiToggleButton-root.Mui-selected:hover {
+    background-color: #2563eb !important; /* 더 진한 파란색 */
+    box-shadow: 0 6px 8px -1px rgba(37, 99, 235, 0.4), 0 4px 6px -1px rgba(37, 99, 235, 0.3) !important;
+    transform: scale(1.08) !important;
+}
