@@ -26,3 +26,6 @@ dist-ssr
 # 로컬 사용자 경로가 실수로 포함된 캐시 폴더 (개인정보 제외)
 UsersuserAppDataRoamingnpm-cache
 **/UsersuserAppDataRoamingnpm-cache/
+
+# 배치/alias 스크립트 (서버에만 둠, 깃에 올리지 않음)
+batch-runner/
