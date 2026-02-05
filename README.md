@@ -1,16 +1,33 @@
-# React + Vite
+# Maple Front
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+React + Vite 기반 메이플 관련 프론트엔드 프로젝트입니다.
 
-Currently, two official plugins are available:
+## 기술 스택
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+- **React 18**
+- **Vite 7** — HMR 지원, 빠른 개발 서버
+- **ESLint** — 코드 검사
 
-## React Compiler
+## 스크립트
 
-The React Compiler is currently not compatible with SWC. See [this issue](https://github.com/vitejs/vite-plugin-react/issues/428) for tracking the progress.
+| 명령어 | 설명 |
+|--------|------|
+| `npm run dev` | 개발 서버 실행 (HMR) |
+| `npm run build` | 프로덕션 빌드 |
+| `npm run preview` | 빌드 결과물 미리보기 |
+| `npm run lint` | ESLint 실행 |
 
-## Expanding the ESLint configuration
+## 사용 방법
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+```bash
+# 의존성 설치
+npm install
+
+# 개발 서버 실행
+npm run dev
+```
+
+## 참고
+
+- React Fast Refresh는 [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react) (Babel)을 사용합니다.
+- 프로덕션 빌드 시 TypeScript·타입 기반 ESLint를 쓰려면 [Vite TS 템플릿](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) 및 [typescript-eslint](https://typescript-eslint.io) 문서를 참고하세요.
