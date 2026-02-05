@@ -1,7 +1,11 @@
-const API_BASE_URL = "http://localhost:8080/api";
+/** API 베이스 URL. 빌드 시 .env.production 에서 VITE_API_BASE_URL 로 덮어쓸 수 있음 (예: /api) */
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "http://localhost:8080/api";
 
-/** 서버 루트(정적 리소스용). resources/static/ 하위는 루트로 서빙됨 */
-export const API_ORIGIN = API_BASE_URL.replace(/\/api\/?$/, "") || "http://localhost:8080";
+/** 서버 루트(정적 리소스용). resources/static/ 하위는 루트로 서빙됨. 상대 경로면 현재 origin 사용 */
+export const API_ORIGIN =
+    API_BASE_URL.startsWith("http")
+        ? API_BASE_URL.replace(/\/api\/?$/, "") || "http://localhost:8080"
+        : (typeof window !== "undefined" ? window.location.origin : "");
 
 /**
  * 몬스터 이미지(GIF) URL 반환 (resources/static/monster-moves/{mob_id}.gif)
