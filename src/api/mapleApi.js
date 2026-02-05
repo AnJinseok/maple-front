@@ -1,5 +1,10 @@
-/** API 베이스 URL. 빌드 시 .env.production 에서 VITE_API_BASE_URL 로 덮어쓸 수 있음 (예: /api) */
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "http://localhost:8080/api";
+/** API 베이스 URL. 브라우저면 접속한 호스트(서버IP)의 8080 사용 → 같은 망 다른 PC에서도 API 통신 가능 */
+const API_BASE_URL =
+    typeof import.meta.env?.VITE_API_BASE_URL === "string" && import.meta.env.VITE_API_BASE_URL
+        ? import.meta.env.VITE_API_BASE_URL
+        : typeof window !== "undefined" && window?.location?.hostname
+            ? `http://${window.location.hostname}:8080/api`
+            : "http://localhost:8080/api";
 
 /** 서버 루트(정적 리소스용). resources/static/ 하위는 루트로 서빙됨. 상대 경로면 현재 origin 사용 */
 export const API_ORIGIN =
