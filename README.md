@@ -2,6 +2,29 @@
 
 React + Vite 기반 메이플 관련 프론트엔드 프로젝트입니다.
 
+## 요구 사항
+
+- **Node.js** 18.x 이상 (20 LTS 권장)  
+  → 미설치 시 [nodejs.org](https://nodejs.org)에서 LTS 버전 다운로드
+
+## 설치
+
+프로젝트 루트에서 아래 한 번만 실행하면 `package.json`에 있는 의존성이 전부 설치됩니다.
+
+```bash
+npm install
+```
+
+**설치되는 주요 패키지 (package.json 기준)**
+
+| 구분 | 패키지 |
+|------|--------|
+| 런타임 | react, react-dom, react-router-dom |
+| UI | @mui/material, @emotion/react, @emotion/styled, @mui/x-date-pickers |
+| 날짜/피커 | dayjs, flatpickr, react-flatpickr |
+| 빌드/개발 | vite, @vitejs/plugin-react |
+| 린트 | eslint, @eslint/js, eslint-plugin-react-hooks, eslint-plugin-react-refresh |
+
 ## 기술 스택
 
 - **React 18**

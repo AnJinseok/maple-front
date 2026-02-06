@@ -7,6 +7,7 @@ export default defineConfig({
         dedupe: ["react", "react-dom"]
     },
     server: {
-        host: true
+        host: true,   // 0.0.0.0 — 외부에서 접속 가능
+        port: 5173    // 개발 서버 포트 (방화벽에서 열어야 함)
     }
 });
