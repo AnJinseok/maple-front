@@ -23,6 +23,16 @@ export function getMonsterImageUrl(mobId) {
 }
 
 /**
+ * 맵 미니맵 이미지 URL 반환 (resources/static/minimaps/{mapId}.png)
+ * - 입력: mapId(string|number)
+ * - 출력: string URL
+ */
+export function getMapImageUrl(mapId) {
+    if (mapId == null || mapId === "") return null;
+    return `${API_ORIGIN}/minimaps/${encodeURIComponent(String(mapId))}.png`;
+}
+
+/**
  * NPC 이미지(PNG) URL 반환 (resources/static/npcs/{npc_id}.png)
  * - 입력: npcId(string|number)
  * - 출력: string URL, 없으면 null
@@ -217,6 +227,37 @@ export async function fetchChronostoryNpcDetail(npcId, mapId) {
     if (!response.ok) {
         throw new Error("크로노스토리 NPC 상세 조회 실패");
     }
+    return response.json();
+}
+
+/**
+ * 크로노스토리 퀘스트 DB 목록 조회 (테이블 저장 데이터)
+ * - 입력: params(object) 예: { page, size, keyword }
+ * - 출력: Promise(JSON) { data: { items, totalElements, page, size, totalPages } }
+ */
+export async function fetchChronostoryQuests(params = {}) {
+    const query = buildQuery(params);
+    const url = query ? `${API_BASE_URL}/chronostory/quests?${query}` : `${API_BASE_URL}/chronostory/quests`;
+    const response = await fetch(url);
+    if (!response.ok) throw new Error("퀘스트 목록 조회 실패");
+    return response.json();
+}
+
+/**
+ * 크로노스토리 퀘스트 DB CSV 임포트
+ * - 입력: file(File), clearFirst(boolean) true면 기존 데이터 삭제 후 삽입
+ * - 출력: Promise(JSON) { data: { importedCount, cleared, message } }
+ */
+export async function fetchChronostoryQuestsImport(file, clearFirst = false) {
+    if (!file || !(file instanceof File)) throw new Error("파일을 선택해주세요.");
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("clearFirst", String(clearFirst));
+    const response = await fetch(`${API_BASE_URL}/chronostory/quests/import`, {
+        method: "POST",
+        body: formData
+    });
+    if (!response.ok) throw new Error("CSV 임포트 실패");
     return response.json();
 }
 

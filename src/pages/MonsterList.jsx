@@ -8,6 +8,7 @@ import {
     fetchMaplelandMobDetail,
     fetchMaplelandItemDetail,
     getMonsterImageUrl,
+    getMapImageUrl,
     getItemImageUrl
 } from "../api/mapleApi";
 
@@ -36,6 +37,11 @@ export default function MonsterList() {
     const [itemDetailLoading, setItemDetailLoading] = useState(false);
     const [itemDetailError, setItemDetailError] = useState(null);
     const [itemDetailOpen, setItemDetailOpen] = useState(false);
+
+    /** 출몰 지역에서 선택한 맵 인덱스 (클릭 시 해당 이미지만 표시, null이면 전체) */
+    const [selectedSpawnIndex, setSelectedSpawnIndex] = useState(null);
+    /** 맵 이미지 로드 실패한 map_id 집합 (맵 박스에서 제외) */
+    const [failedMapIds, setFailedMapIds] = useState(() => new Set());
 
     const listRequestIdRef = useRef(0);
 
@@ -151,6 +157,8 @@ export default function MonsterList() {
     function handleSelectMonsterRow(row, index) {
         setSelectedRow(row);
         setSelectedRowIndex(index);
+        setSelectedSpawnIndex(null);
+        setFailedMapIds(new Set());
         const mobId = row?.mob_id ?? row?.mobId ?? row?.id ?? null;
         setMobDetail(null);
         setMobDetailError(null);
@@ -289,24 +297,32 @@ export default function MonsterList() {
                         <div className="map-list">
                             {monsterResults.map((row, index) => {
                                 const display = getMonsterDisplay(row);
-                                const { town, map: mapName } = getTownAndMapFromRow(row);
                                 const rowKey = getMonsterRowKey(row, index);
                                 const isSelected = selectedRow && getMonsterRowKey(selectedRow, selectedRowIndex) === rowKey;
+                                const spawnCount = Number(row?.spawn_count ?? row?.spawnCount ?? 0);
+                                const hasSpawn = spawnCount > 0;
+                                const itemBg = hasSpawn ? "rgba(34, 197, 94, 0.12)" : "rgba(148, 163, 184, 0.15)";
                                 return (
                                     <button
                                         key={row?.id ?? rowKey}
                                         type="button"
                                         className={`map-list-item ${isSelected ? "selected" : ""}`}
+                                        style={{ backgroundColor: itemBg }}
                                         onClick={() => handleSelectMonsterRow(row, index)}
                                     >
-                                        <div className="map-list-name">
-                                            <div style={{ fontWeight: 800, lineHeight: 1.2 }}>
-                                                {display.nameKr} (Lv.{display.level ?? "-"} / XP {display.xp ?? "-"})
+                                        <div className="map-list-name" style={{ width: "100%", textAlign: "left" }}>
+                                            <div style={{ fontWeight: 800, lineHeight: 1.3, marginBottom: "2px" }}>
+                                                {display.nameKr}
                                             </div>
-                                            {town != null && (
-                                                <div style={{ fontSize: "12px", color: "var(--app-muted-text-color)", marginTop: "2px" }}>{town}</div>
-                                            )}
-                                            <div style={{ fontSize: "12px", color: "var(--app-muted-text-color)", marginTop: "2px" }}>{mapName}</div>
+                                            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", flexWrap: "wrap", gap: "6px 12px", fontSize: "12px", color: "var(--app-muted-text-color)" }}>
+                                                <span>{display.nameEn || "-"}</span>
+                                                <span style={{ fontWeight: 600, color: "var(--app-text-color)" }}>
+                                                    Lv.{display.level ?? "-"} / XP {display.xp ?? "-"}
+                                                </span>
+                                            </div>
+                                            <div style={{ fontSize: "11px", color: "var(--app-muted-text-color)", marginTop: "4px", fontWeight: 600 }}>
+                                                {hasSpawn ? `출몰 ${spawnCount}곳` : "출몰 없음"}
+                                            </div>
                                         </div>
                                     </button>
                                 );
@@ -367,17 +383,80 @@ export default function MonsterList() {
                                                 </div>
                                                 {isChronoStoryWorld && mobDetail.spawnMaps && mobDetail.spawnMaps.length > 0 && (
                                                     <>
-                                                        <div className="map-kv-label" style={{ fontWeight: "bold", marginBottom: "6px", marginTop: "8px" }}>출몰 지역</div>
-                                                        <ul style={{ margin: 0, paddingLeft: "20px", fontSize: "13px", color: "var(--app-text-color)", lineHeight: 1.6 }}>
-                                                            {mobDetail.spawnMaps.map((loc, idx) => {
-                                                                const townKr = loc?.town_name_kr ?? loc?.townNameKr ?? "";
-                                                                const mapKr = loc?.map_name_kr ?? loc?.mapNameKr ?? "";
-                                                                const mapEn = loc?.map_name_en ?? loc?.mapNameEn ?? "";
-                                                                const label = townKr && mapKr ? `${townKr} - ${mapKr}` : mapKr || mapEn || "-";
-                                                                const sub = mapEn && mapKr !== mapEn ? ` (${mapEn})` : "";
-                                                                return <li key={`spawn-${idx}`}>{label}{sub}</li>;
-                                                            })}
-                                                        </ul>
+                                                        <div className="map-kv-label" style={{ fontWeight: "bold", marginBottom: "8px", marginTop: "8px" }}>출몰 지역</div>
+                                                        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px", alignItems: "start", minWidth: 0 }}>
+                                                            <div style={{ border: "1px solid var(--app-border)", borderRadius: "8px", padding: "10px 12px", background: "var(--app-surface)", maxHeight: "320px", overflowY: "auto" }}>
+                                                                <div style={{ fontSize: "11px", color: "var(--app-muted-text-color)", marginBottom: "6px", fontWeight: 700 }}>리스트</div>
+                                                                <ul style={{ margin: 0, paddingLeft: 0, listStyle: "none", fontSize: "12px", color: "var(--app-text-color)", lineHeight: 1.6 }}>
+                                                                    {mobDetail.spawnMaps.map((loc, idx) => {
+                                                                        // map_file_path에 값이 있으면 클릭 가능. API에 없으면 map_id로 폴백
+                                                                        const mapFilePath = loc?.map_file_path ?? loc?.mapFilePath;
+                                                                        const mapFilePathProvided = loc?.map_file_path !== undefined || loc?.mapFilePath !== undefined;
+                                                                        const hasMapFilePath = mapFilePath != null && String(mapFilePath).trim() !== "";
+                                                                        const hasMapId = (loc?.map_id ?? loc?.mapId) != null && String(loc?.map_id ?? loc?.mapId).trim() !== "";
+                                                                        const canSelect = mapFilePathProvided ? hasMapFilePath : hasMapId;
+                                                                        const townKr = loc?.town_name_kr ?? loc?.townNameKr ?? "";
+                                                                        const mapKr = loc?.map_name_kr ?? loc?.mapNameKr ?? "";
+                                                                        const mapEn = loc?.map_name_en ?? loc?.mapNameEn ?? "";
+                                                                        const label = townKr && mapKr ? `${townKr} - ${mapKr}` : mapKr || mapEn || "-";
+                                                                        const sub = mapEn && mapKr !== mapEn ? ` (${mapEn})` : "";
+                                                                        const isSelected = canSelect && selectedSpawnIndex === idx;
+                                                                        return (
+                                                                            <li
+                                                                                key={`spawn-${idx}`}
+                                                                                role={canSelect ? "button" : undefined}
+                                                                                tabIndex={canSelect ? 0 : undefined}
+                                                                                onClick={() => canSelect && setSelectedSpawnIndex(idx)}
+                                                                                onKeyDown={canSelect ? (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setSelectedSpawnIndex(idx); } } : undefined}
+                                                                                style={{
+                                                                                    padding: "6px 10px", marginBottom: "2px", borderRadius: "6px",
+                                                                                    cursor: canSelect ? "pointer" : "default",
+                                                                                    backgroundColor: isSelected ? "rgba(59, 130, 246, 0.2)" : "transparent",
+                                                                                    border: isSelected ? "1px solid rgba(59, 130, 246, 0.5)" : "1px solid transparent",
+                                                                                    opacity: canSelect ? 1 : 0.6
+                                                                                }}
+                                                                            >
+                                                                                {label}{sub}
+                                                                            </li>
+                                                                        );
+                                                                    })}
+                                                                </ul>
+                                                            </div>
+                                                            <div style={{ border: "1px solid var(--app-border)", borderRadius: "8px", padding: "10px", background: "var(--app-surface)", maxHeight: "320px", overflowY: "auto", display: "flex", flexDirection: "column", gap: "8px", minHeight: "200px" }}>
+                                                                <div style={{ marginBottom: "4px" }}>
+                                                                    <span style={{ fontSize: "11px", color: "var(--app-muted-text-color)", fontWeight: 700 }}>맵 이미지</span>
+                                                                </div>
+                                                                {(() => {
+                                                                    const loc = selectedSpawnIndex != null ? mobDetail.spawnMaps[selectedSpawnIndex] : null;
+                                                                    const mapId = loc?.map_id ?? loc?.mapId ?? null;
+                                                                    const hasSelection = selectedSpawnIndex !== null && mapId;
+                                                                    const isFailed = hasSelection && failedMapIds.has(String(mapId));
+                                                                    const mapKr = loc?.map_name_kr ?? loc?.mapNameKr ?? "";
+                                                                    if (hasSelection) {
+                                                                        return (
+                                                                            <div style={{ textAlign: "center", padding: "8px", backgroundColor: "rgba(59, 130, 246, 0.08)", borderRadius: "8px", border: "1px solid rgba(59, 130, 246, 0.3)" }}>
+                                                                                {isFailed ? (
+                                                                                    <div style={{ width: "100%", minHeight: "200px", border: "1px solid var(--app-border)", borderRadius: "6px", background: "var(--app-bg)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "12px", color: "var(--app-muted-text-color)" }}>이미지 없음</div>
+                                                                                ) : (
+                                                                                    <img
+                                                                                        src={getMapImageUrl(mapId)}
+                                                                                        alt={mapKr || `맵 ${mapId}`}
+                                                                                        style={{ display: "block", maxWidth: "100%", height: "auto", maxHeight: "280px", objectFit: "contain", margin: "0 auto", border: "1px solid var(--app-border)", borderRadius: "6px", background: "var(--app-bg)" }}
+                                                                                        onError={() => setFailedMapIds(prev => new Set(prev).add(String(mapId)))}
+                                                                                    />
+                                                                                )}
+                                                                                <div style={{ fontSize: "12px", color: "var(--app-text-color)", marginTop: "8px", fontWeight: 600 }}>{mapKr || mapId || "-"}</div>
+                                                                            </div>
+                                                                        );
+                                                                    }
+                                                                    return (
+                                                                        <div style={{ fontSize: "12px", color: "var(--app-muted-text-color)", display: "flex", alignItems: "center", justifyContent: "center", minHeight: "180px", textAlign: "center" }}>
+                                                                            리스트에서 맵을 선택하면 이미지가 표시됩니다.
+                                                                        </div>
+                                                                    );
+                                                                })()}
+                                                            </div>
+                                                        </div>
                                                     </>
                                                 )}
                                             </>
@@ -487,37 +566,81 @@ export default function MonsterList() {
             </div>
 
             {itemDetailOpen && (
-                <div style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0, backgroundColor: "rgba(0,0,0,0.5)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 10000, padding: "20px" }} onClick={handleCloseItemDetail}>
-                    <div style={{ backgroundColor: "var(--app-bg)", borderRadius: "12px", padding: "24px", maxWidth: "800px", width: "100%", maxHeight: "90vh", overflowY: "auto", boxShadow: "0 4px 20px rgba(0,0,0,0.3)", border: "1px solid var(--app-border)" }} onClick={(e) => e.stopPropagation()}>
-                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px" }}>
-                            <h3 style={{ margin: 0 }}>아이템 상세</h3>
-                            <button onClick={handleCloseItemDetail} style={{ background: "transparent", border: "none", fontSize: "24px", cursor: "pointer" }}>×</button>
+                <div style={{ position: "fixed", inset: 0, backgroundColor: "rgba(0,0,0,0.5)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 10000, padding: "16px" }} onClick={handleCloseItemDetail}>
+                    <div style={{ backgroundColor: "var(--app-bg)", borderRadius: "12px", maxWidth: "720px", width: "100%", maxHeight: "88vh", display: "flex", flexDirection: "column", overflow: "hidden", boxShadow: "0 8px 32px rgba(0,0,0,0.25)", border: "1px solid var(--app-border)" }} onClick={(e) => e.stopPropagation()}>
+                        <div style={{ flexShrink: 0, display: "flex", justifyContent: "space-between", alignItems: "center", padding: "14px 20px", borderBottom: "1px solid var(--app-border)", background: "var(--app-surface)" }}>
+                            <h3 style={{ margin: 0, color: "var(--app-text-color)", fontSize: "18px", fontWeight: "700" }}>아이템 상세</h3>
+                            <button type="button" onClick={handleCloseItemDetail} style={{ background: "transparent", border: "none", fontSize: "22px", lineHeight: 1, cursor: "pointer", color: "var(--app-muted-text-color)", padding: "4px", width: "32px", height: "32px", display: "flex", alignItems: "center", justifyContent: "center", borderRadius: "6px" }} onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(0,0,0,0.08)"; e.currentTarget.style.color = "var(--app-text-color)"; }} onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = "var(--app-muted-text-color)"; }}>×</button>
                         </div>
-                        {itemDetailLoading && <div>로딩 중...</div>}
-                        {itemDetailError && <div style={{ color: "#ef4444" }}>{itemDetailError}</div>}
-                        {!itemDetailLoading && !itemDetailError && itemDetail && (
-                            <>
-                                {itemDetail.item_id != null && (
-                                    <div style={{ marginBottom: "20px", textAlign: "center" }}>
-                                        <img src={getItemImageUrl(itemDetail.item_id)} alt={itemDetail.item_name_kr || "아이템"} style={{ maxWidth: "100%" }} onError={(e) => { e.target.style.display = "none"; }} />
-                                    </div>
-                                )}
-                                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))", gap: "8px" }}>
-                                    {Object.entries(itemDetail).map(([key, value]) => {
-                                        if (value === null || value === undefined) return null;
-                                        if (["class_beginner", "class_warrior", "class_magician", "class_bowman", "class_thief", "class_pirate", "item_file_path"].includes(key)) return null;
-                                        const displayValue = typeof value === "number" ? value.toLocaleString() : typeof value === "boolean" ? (value ? "예" : "아니오") : (value || "-");
-                                        return (
-                                            <div key={key} style={{ padding: "10px", border: "1px solid var(--app-border)", borderRadius: "8px", background: "var(--app-surface)" }}>
-                                                <div style={{ fontSize: "11px", color: "var(--app-muted-text-color)", marginBottom: "4px" }}>{getItemDetailLabel(key)}</div>
-                                                <div style={{ fontSize: "13px" }}>{String(displayValue)}</div>
+                        <div style={{ flex: 1, minHeight: 0, overflowY: "auto", padding: "20px" }}>
+                            {itemDetailLoading && <div style={{ textAlign: "center", padding: "48px 24px", color: "var(--app-muted-text-color)", fontSize: "14px" }}>로딩 중...</div>}
+                            {itemDetailError && <div style={{ padding: "24px", color: "#ef4444", textAlign: "center", fontSize: "14px" }}>{itemDetailError}</div>}
+                            {!itemDetailLoading && !itemDetailError && itemDetail && (
+                                <div style={{ display: "grid", gridTemplateColumns: "minmax(0, 180px) 1fr", gap: "24px", alignItems: "start" }}>
+                                    <div style={{ display: "flex", flexDirection: "column", gap: "12px", position: "sticky", top: 0 }}>
+                                        {itemDetail.item_id != null && (
+                                            <div style={{ padding: "10px", border: "1px solid var(--app-border)", borderRadius: "8px", background: "var(--app-surface)", textAlign: "center", lineHeight: 0 }}>
+                                                <img src={getItemImageUrl(itemDetail.item_id)} alt="" style={{ display: "block", width: "100%", height: "auto", maxHeight: "140px", objectFit: "contain", margin: "0 auto" }} onError={(e) => { e.target.style.display = "none"; }} />
                                             </div>
-                                        );
-                                    })}
+                                        )}
+                                        {(() => {
+                                            const typeMap = { eqp: "장비", use: "소비", etc: "기타", cash: "캐시", setup: "설치템", install: "설치템" };
+                                            const rawType = itemDetail.type ?? itemDetail.item_type ?? itemDetail.category ?? null;
+                                            const rawSub = itemDetail.sub_type ?? itemDetail.subType ?? null;
+                                            const typeKey = rawType ? String(rawType).trim().toLowerCase() : "";
+                                            const typeLabel = typeKey && typeMap[typeKey] ? typeMap[typeKey] : (rawType ? String(rawType) : null);
+                                            const subLabel = rawSub ? String(rawSub) : null;
+                                            const hasCategory = typeLabel || subLabel;
+                                            if (!hasCategory) return null;
+                                            return (
+                                                <div style={{ padding: "10px 12px", border: "1px solid var(--app-border)", borderRadius: "8px", background: "var(--app-surface)" }}>
+                                                    <div style={{ fontSize: "10px", color: "var(--app-muted-text-color)", marginBottom: "6px", fontWeight: "700", textTransform: "uppercase" }}>카테고리</div>
+                                                    <div style={{ display: "flex", flexWrap: "wrap", gap: "6px" }}>
+                                                        {typeLabel && <span style={{ padding: "3px 8px", borderRadius: "4px", background: "rgba(34, 197, 94, 0.12)", color: "var(--app-text-color)", fontSize: "11px", fontWeight: "600" }}>{typeLabel}</span>}
+                                                        {subLabel && typeLabel !== subLabel && <span style={{ fontSize: "11px", color: "var(--app-muted-text-color)" }}>{subLabel}</span>}
+                                                    </div>
+                                                </div>
+                                            );
+                                        })()}
+                                        {(itemDetail.class_beginner !== null || itemDetail.class_warrior !== null || itemDetail.class_magician !== null || itemDetail.class_bowman !== null || itemDetail.class_thief !== null || itemDetail.class_pirate !== null) && (
+                                            <div style={{ padding: "10px 12px", border: "1px solid var(--app-border)", borderRadius: "8px", background: "var(--app-surface)" }}>
+                                                <div style={{ fontSize: "10px", color: "var(--app-muted-text-color)", marginBottom: "6px", fontWeight: "700", textTransform: "uppercase" }}>직업군</div>
+                                                <div style={{ display: "flex", flexWrap: "wrap", gap: "6px" }}>
+                                                    {itemDetail.class_beginner && <span style={{ padding: "3px 8px", borderRadius: "4px", background: "rgba(59, 130, 246, 0.12)", color: "var(--app-text-color)", fontSize: "11px", fontWeight: "600" }}>초보자</span>}
+                                                    {itemDetail.class_warrior && <span style={{ padding: "3px 8px", borderRadius: "4px", background: "rgba(59, 130, 246, 0.12)", color: "var(--app-text-color)", fontSize: "11px", fontWeight: "600" }}>전사</span>}
+                                                    {itemDetail.class_magician && <span style={{ padding: "3px 8px", borderRadius: "4px", background: "rgba(59, 130, 246, 0.12)", color: "var(--app-text-color)", fontSize: "11px", fontWeight: "600" }}>마법사</span>}
+                                                    {itemDetail.class_bowman && <span style={{ padding: "3px 8px", borderRadius: "4px", background: "rgba(59, 130, 246, 0.12)", color: "var(--app-text-color)", fontSize: "11px", fontWeight: "600" }}>궁수</span>}
+                                                    {itemDetail.class_thief && <span style={{ padding: "3px 8px", borderRadius: "4px", background: "rgba(59, 130, 246, 0.12)", color: "var(--app-text-color)", fontSize: "11px", fontWeight: "600" }}>도적</span>}
+                                                    {itemDetail.class_pirate && <span style={{ padding: "3px 8px", borderRadius: "4px", background: "rgba(59, 130, 246, 0.12)", color: "var(--app-text-color)", fontSize: "11px", fontWeight: "600" }}>해적</span>}
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
+                                    <div style={{ minWidth: 0 }}>
+                                        {(itemDetail.item_name_kr || itemDetail.item_name_en) && (
+                                            <div style={{ marginBottom: "16px", paddingBottom: "12px", borderBottom: "1px solid var(--app-border)" }}>
+                                                <div style={{ fontSize: "16px", fontWeight: "700", color: "var(--app-text-color)" }}>{itemDetail.item_name_kr || itemDetail.item_name_en}</div>
+                                                {(itemDetail.item_name_kr && itemDetail.item_name_en) && <div style={{ fontSize: "12px", color: "var(--app-muted-text-color)", marginTop: "2px" }}>{itemDetail.item_name_en}</div>}
+                                            </div>
+                                        )}
+                                        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(160px, 1fr))", gap: "8px" }}>
+                                            {Object.entries(itemDetail).map(([key, value]) => {
+                                                if (value === null || value === undefined) return null;
+                                                if (["class_beginner", "class_warrior", "class_magician", "class_bowman", "class_thief", "class_pirate", "item_file_path", "type", "item_type", "sub_type", "subType", "category", "item_name_kr", "item_name_en", "item_id"].includes(key)) return null;
+                                                const displayValue = typeof value === "number" ? value.toLocaleString() : typeof value === "boolean" ? (value ? "예" : "아니오") : (value || "-");
+                                                return (
+                                                    <div key={key} style={{ padding: "8px 10px", border: "1px solid var(--app-border)", borderRadius: "6px", background: "var(--app-surface)" }}>
+                                                        <div style={{ fontSize: "10px", color: "var(--app-muted-text-color)", marginBottom: "2px", fontWeight: "600" }}>{getItemDetailLabel(key)}</div>
+                                                        <div style={{ fontSize: "12px", color: "var(--app-text-color)", fontWeight: "500" }}>{String(displayValue)}</div>
+                                                    </div>
+                                                );
+                                            })}
+                                        </div>
+                                    </div>
                                 </div>
-                            </>
-                        )}
-                        {!itemDetailLoading && !itemDetailError && !itemDetail && <div>아이템 상세 정보가 없습니다.</div>}
+                            )}
+                            {!itemDetailLoading && !itemDetailError && !itemDetail && <div style={{ textAlign: "center", padding: "48px 24px", color: "var(--app-muted-text-color)", fontSize: "14px" }}>아이템 상세 정보가 없습니다.</div>}
+                        </div>
                     </div>
                 </div>
             )}

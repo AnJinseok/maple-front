@@ -6,6 +6,7 @@ import ShoutList from "./pages/ShoutList";
 import EquipStats from "./pages/EquipStats";
 import MapList from "./pages/MapList";
 import MonsterList from "./pages/MonsterList";
+import QuestList from "./pages/QuestList";
 import { WorldProvider } from "./contexts/WorldContext";
 import { DisplayProvider } from "./contexts/DisplayContext";
 
@@ -30,6 +31,8 @@ export default function App() {
                             <Route path="/maps" element={<MapList />} />
                             {/* 몬스터 전용 페이지 */}
                             <Route path="/monsters" element={<MonsterList />} />
+                            {/* 크로노스토리 퀘스트 DB */}
+                            <Route path="/quests" element={<QuestList />} />
                         </Routes>
                     </MainLayout>
                 </BrowserRouter>

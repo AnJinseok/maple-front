@@ -73,6 +73,14 @@ export default function SideMenu() {
                             몬스터
                         </NavLink>
                     </li>
+                    <li>
+                        <NavLink
+                            to="/quests"
+                            className={({ isActive }) => (isActive ? "active" : "")}
+                        >
+                            퀘스트
+                        </NavLink>
+                    </li>
                 </ul>
             </nav>
         </aside>
