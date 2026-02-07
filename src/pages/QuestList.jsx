@@ -50,24 +50,43 @@ function toQuestItems(source, apiItems, csvHeaders, csvRows) {
     return [];
 }
 
-/** 퀘스트 한 건에서 목록에 쓸 제목(이름) 추출 */
-function getQuestDisplayName(item) {
-    if (!item) return "(이름 없음)";
-    const v = item.quest_name_kr ?? item.questNameKr ?? item.quest_name ?? item.questName ?? item.QuestName ?? item.QuestID ?? "";
-    const s = String(v).trim();
-    return s || "(이름 없음)";
+/** 퀘스트 제목 문자열 (검색용) */
+function getQuestDisplayNameText(item) {
+    if (!item) return "";
+    const kr = String(item.quest_name_kr ?? item.questNameKr ?? "").trim();
+    const en = String(item.quest_name ?? item.questName ?? item.QuestName ?? item.QuestID ?? "").trim();
+    if (kr) return en ? `${kr} ${en}` : kr;
+    return en ? en : "";
 }
 
-/** 퀘스트 한 건에서 목록 메타(지역·NPC 등) 문자열 */
+/** 퀘스트 한 건에서 목록에 쓸 제목: 한글(줄바꿈)영어(작은글씨), 한글 없으면 -(영어) */
+function getQuestDisplayName(item) {
+    if (!item) return "(이름 없음)";
+    const kr = String(item.quest_name_kr ?? item.questNameKr ?? "").trim();
+    const en = String(item.quest_name ?? item.questName ?? item.QuestName ?? item.QuestID ?? "").trim();
+    if (!kr && !en) return "(이름 없음)";
+    return (
+        <>
+            {kr || "-"}
+            {en ? (
+                <span style={{ display: "block", fontSize: "0.85em", color: "var(--app-muted-text-color, #666)", marginTop: "2px" }}>
+                    {kr ? en : `(${en})`}
+                </span>
+            ) : null}
+        </>
+    );
+}
+
+/** 퀘스트 한 건에서 목록 메타: NPC · 요구레벨 · 경험치 */
 function getQuestMeta(item) {
     if (!item) return "";
-    const region = item.region_name ?? item.regionName ?? item.region ?? "";
     const npc = item.npc_name ?? item.npcName ?? item.QuestNPCName ?? "";
     const level = item.req_level ?? item.reqLevel ?? item.ReqLevel ?? "";
+    const exp = item.reward_exp ?? item.rewardExp ?? "";
     const parts = [];
-    if (String(region).trim()) parts.push(String(region).trim());
     if (String(npc).trim()) parts.push(String(npc).trim());
     if (String(level).trim()) parts.push(`Lv.${level}`);
+    if (exp !== "" && exp !== null && exp !== undefined) parts.push(`경험치 ${Number(exp).toLocaleString()}`);
     return parts.join(" · ");
 }
 
@@ -154,7 +173,7 @@ export default function QuestList() {
         if (!search.trim()) return questItems;
         const lower = search.trim().toLowerCase();
         return questItems.filter((item) => {
-            const name = getQuestDisplayName(item);
+            const name = getQuestDisplayNameText(item);
             const meta = getQuestMeta(item);
             const all = JSON.stringify(item || {}).toLowerCase();
             return name.toLowerCase().includes(lower) || meta.toLowerCase().includes(lower) || all.includes(lower);
@@ -217,9 +236,9 @@ export default function QuestList() {
         reward_item_count_2: "보상 개수 2",
         reward_mesos: "보상 메소",
         reward_fame: "보상 명성",
-        journal_0: "저널 1",
-        journal_1: "저널 2",
-        journal_2: "저널 3",
+        journal_0: "대화 1",
+        journal_1: "대화 2",
+        journal_2: "대화 3",
         contents: "내용",
         contents_kr: "내용(한글)",
         requirements: "조건",
@@ -382,16 +401,14 @@ export default function QuestList() {
                             </div>
                             {["journal_0", "journal_1", "journal_2"].some((k) => selectedQuest[k]) && (
                                 <div className="map-section">
-                                    <h4>저널</h4>
-                                    <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-                                        {["journal_0", "journal_1", "journal_2"].map((k) => (
-                                            <div key={k} className="map-info-item">
-                                                <div className="map-info-label">{detailLabelMap[k] ?? k}</div>
-                                                <div className="map-info-value" style={{ whiteSpace: "pre-wrap", wordBreak: "break-word" }}>
-                                                    {renderDetailValue(k, selectedQuest[k])}
-                                                </div>
-                                            </div>
-                                        ))}
+                                    <h4>대화</h4>
+                                    <div className="map-info-value" style={{ whiteSpace: "pre-wrap", wordBreak: "break-word" }}>
+                                        {(() => {
+                                            const parts = ["journal_0", "journal_1", "journal_2"]
+                                                .map((k) => selectedQuest[k] ?? selectedQuest[k.replace(/_/g, "")])
+                                                .filter((v) => v != null && String(v).trim() !== "");
+                                            return renderDetailValue(null, parts.join("\n\n"));
+                                        })()}
                                     </div>
                                 </div>
                             )}
