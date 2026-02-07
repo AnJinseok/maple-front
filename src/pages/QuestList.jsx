@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { useWorld } from "../contexts/WorldContext";
 import { fetchChronostoryQuests } from "../api/mapleApi";
 
 const CSV_PATH = "/data/QuestDatabase.csv";
@@ -103,6 +104,9 @@ function getQuestKey(item, index) {
  * - 맵 리스트와 동일한 레이아웃: 좌측 목록 + 우측 상세
  */
 export default function QuestList() {
+    const { world } = useWorld();
+    const isChronoStoryWorld = world === "크로노스토리";
+
     const [source, setSource] = useState(null); // "api" | "csv" | null
     const [apiItems, setApiItems] = useState(null);
     const [csvText, setCsvText] = useState(null);
@@ -162,8 +166,13 @@ export default function QuestList() {
     };
 
     useEffect(() => {
-        loadFromApi();
-    }, []);
+        if (isChronoStoryWorld) {
+            loadFromApi();
+        } else {
+            setLoading(false);
+            setSelectedQuest(null);
+        }
+    }, [isChronoStoryWorld]);
 
     const questItems = useMemo(() => {
         return toQuestItems(source, apiItems, csvData.headers, csvData.rows);
@@ -239,8 +248,8 @@ export default function QuestList() {
         journal_0: "대화 1",
         journal_1: "대화 2",
         journal_2: "대화 3",
-        contents: "내용",
-        contents_kr: "내용(한글)",
+        contents: "퀘스트 내용",
+        contents_kr: "퀘스트 내용(한글)",
         requirements: "조건",
         rewards: "보상",
         category: "카테고리",
@@ -255,13 +264,41 @@ export default function QuestList() {
         return s;
     };
 
+    /** 퀘스트 내용에서 #r(빨강) #b(파랑) #g(초록) #e(보라) #k(끝) #cRRGGBB(커스텀) 등 색상 코드 반영, 줄바꿈은 그대로 표시 */
+    const renderQuestContent = (text) => {
+        if (text == null || String(text).trim() === "") return null;
+        let s = String(text)
+            .replace(/\r\n/g, "\n")
+            .replace(/\r/g, "\n")
+            .replace(/\\n/g, "\n")
+            .replace(/#r/gi, "<span style=\"color:#e53935\">")
+            .replace(/#b/gi, "<span style=\"color:#1e88e5\">")
+            .replace(/#g/gi, "<span style=\"color:#43a047\">")
+            .replace(/#e/gi, "<span style=\"color:#8e24aa\">")
+            .replace(/#k/gi, "</span>")
+            .replace(/#c([0-9a-fA-F]{6})/g, (_, hex) => `<span style="color:#${hex}">`)
+            .replace(/\n/g, "<br />");
+        const openCount = (s.match(/<span/g) || []).length;
+        const closeCount = (s.match(/<\/span>/g) || []).length;
+        if (openCount > closeCount) s += "</span>".repeat(openCount - closeCount);
+        return <div className="map-info-value" style={{ whiteSpace: "pre-wrap", wordBreak: "break-word", lineHeight: 1.5 }} dangerouslySetInnerHTML={{ __html: s }} />;
+    };
+
     return (
         <div className="map-page">
             <div className="map-header">
                 <h2>퀘스트</h2>
-                <p className="map-subtitle">
-                    크로노스토리 퀘스트 DB {source === "api" ? "(DB 저장 데이터)" : source === "csv" ? "(CSV 파일)" : ""}
-                </p>
+                {isChronoStoryWorld ? (
+                    <>
+                        <p className="map-subtitle">퀘스트명으로 검색한 뒤 목록에서 선택하면 상세(보상·조건 등)를 볼 수 있습니다.</p>
+                        <p className="map-subtitle">선택된 월드: <b>{world}</b></p>
+                    </>
+                ) : (
+                    <>
+                        <p className="map-subtitle">퀘스트는 크로노스토리 월드에서만 이용할 수 있습니다.</p>
+                        <p className="map-subtitle">선택된 월드: <b>{world}</b></p>
+                    </>
+                )}
             </div>
 
             <div className="map-grid monster-list-grid">
@@ -281,8 +318,11 @@ export default function QuestList() {
                             style={{ border: "none", flex: 1, padding: "10px 12px" }}
                         />
                     </div>
-                    {loading && <div className="map-empty">퀘스트 데이터 로딩 중...</div>}
-                    {!loading && error && !csvText && !apiItems?.length && (
+                    {!isChronoStoryWorld && (
+                        <div className="map-empty">크로노스토리 월드에서만 퀘스트를 이용할 수 있습니다.</div>
+                    )}
+                    {isChronoStoryWorld && loading && <div className="map-empty">퀘스트 데이터 로딩 중...</div>}
+                    {isChronoStoryWorld && !loading && error && !csvText && !apiItems?.length && (
                         <div className="map-error">
                             {error}
                             <div style={{ marginTop: "8px", fontSize: "12px", color: "var(--app-muted-text-color)" }}>
@@ -290,12 +330,12 @@ export default function QuestList() {
                             </div>
                         </div>
                     )}
-                    {!loading && (source === "api" || source === "csv") && filteredItems.length === 0 && (
+                    {isChronoStoryWorld && !loading && (source === "api" || source === "csv") && filteredItems.length === 0 && (
                         <div className="map-empty">
                             {search.trim() ? "검색 결과가 없습니다." : "퀘스트 데이터가 없습니다."}
                         </div>
                     )}
-                    {!loading && (source === "api" || source === "csv") && filteredItems.length > 0 && (
+                    {isChronoStoryWorld && !loading && (source === "api" || source === "csv") && filteredItems.length > 0 && (
                         <div className="map-list">
                             {filteredItems.map((item, index) => {
                                 const key = getQuestKey(item, index);
@@ -378,6 +418,73 @@ export default function QuestList() {
                                     })}
                                 </div>
                             </div>
+                            {(() => {
+                                const req = selectedQuest?.requirements ?? selectedQuest?.requirementsParsed;
+                                if (!req) return null;
+                                const boxStyle = {
+                                    marginTop: "8px",
+                                    padding: "12px",
+                                    background: "var(--app-bg-tertiary, #f8f9fa)",
+                                    borderRadius: "8px",
+                                    border: "1px solid var(--app-border-color, rgba(0,0,0,0.1))"
+                                };
+                                const rowStyle = {
+                                    display: "flex", alignItems: "center", padding: "8px 12px",
+                                    background: "var(--app-bg-secondary, rgba(0,0,0,0.04))", borderRadius: "6px",
+                                    marginBottom: "6px", border: "1px solid var(--app-border-color, rgba(0,0,0,0.08))", fontSize: "14px"
+                                };
+                                let itemList = [];
+                                let npcList = [];
+                                try {
+                                    const obj = typeof req === "string" ? JSON.parse(req) : req;
+                                    const itemArr = obj?.item ?? obj?.items ?? [];
+                                    const npcArr = obj?.npc ?? obj?.npcs ?? [];
+                                    if (Array.isArray(itemArr)) {
+                                        itemList = itemArr.map((it, i) => {
+                                            const id = it?.id ?? it?.item_id ?? "-";
+                                            const name = it?.name ?? it?.item_name_kr ?? it?.item_name_en ?? "";
+                                            const count = it?.count ?? "?";
+                                            const display = name ? `${name} x ${count}` : `ID ${id} x ${count}`;
+                                            return <div key={`req-item-${i}`} style={rowStyle}><span style={{ marginRight: "10px", color: "var(--app-muted-text-color, #666)", fontWeight: 600 }}>{i + 1}.</span><span>{display}</span></div>;
+                                        });
+                                    }
+                                    if (Array.isArray(npcArr)) {
+                                        npcList = npcArr.map((n, i) => {
+                                            const id = n?.id ?? n?.npc_id ?? "-";
+                                            const name = n?.name ?? n?.npc_name ?? "";
+                                            const count = n?.count ?? "?";
+                                            const display = name ? (count !== "?" ? `${name} 만나기 x ${count}` : `${name} 만나기`) : `NPC ID ${id}`;
+                                            return <div key={`req-npc-${i}`} style={rowStyle}><span style={{ marginRight: "10px", color: "var(--app-muted-text-color, #666)", fontWeight: 600 }}>{i + 1}.</span><span>{display}</span></div>;
+                                        });
+                                    }
+                                    if (obj?.itemLines && Array.isArray(obj.itemLines)) {
+                                        itemList = obj.itemLines.map((line, i) => <div key={`req-line-${i}`} style={rowStyle}><span style={{ marginRight: "10px", color: "var(--app-muted-text-color, #666)", fontWeight: 600 }}>{i + 1}.</span><span>{line}</span></div>);
+                                    }
+                                    if (obj?.npcLines && Array.isArray(obj.npcLines)) {
+                                        npcList = obj.npcLines.map((line, i) => <div key={`npc-line-${i}`} style={rowStyle}><span style={{ marginRight: "10px", color: "var(--app-muted-text-color, #666)", fontWeight: 600 }}>{i + 1}.</span><span>{line}</span></div>);
+                                    }
+                                } catch (_) { /* ignore */ }
+                                if (itemList.length === 0 && npcList.length === 0) return null;
+                                return (
+                                    <div className="map-section">
+                                        <h4>조건 (요구 아이템 · NPC)</h4>
+                                        <div style={boxStyle}>
+                                            {itemList.length > 0 && (
+                                                <>
+                                                    <div style={{ fontSize: "12px", color: "var(--app-muted-text-color)", marginBottom: "6px", fontWeight: 600 }}>요구 아이템</div>
+                                                    {itemList}
+                                                </>
+                                            )}
+                                            {npcList.length > 0 && (
+                                                <>
+                                                    <div style={{ fontSize: "12px", color: "var(--app-muted-text-color)", marginBottom: "6px", marginTop: itemList.length ? "12px" : 0, fontWeight: 600 }}>요구 NPC</div>
+                                                    {npcList}
+                                                </>
+                                            )}
+                                        </div>
+                                    </div>
+                                );
+                            })()}
                             <div className="map-section">
                                 <h4>보상</h4>
                                 <div className="map-info-grid">
@@ -412,18 +519,76 @@ export default function QuestList() {
                                     </div>
                                 </div>
                             )}
-                            {["contents", "contents_kr", "requirements", "rewards", "category"].some((k) => selectedQuest[k]) && (
+                            {(() => {
+                                const rewards = selectedQuest?.rewards ?? selectedQuest?.rewardParsed;
+                                if (!rewards) return null;
+                                let list = null;
+                                try {
+                                    const obj = typeof rewards === "string" ? JSON.parse(rewards) : rewards;
+                                    const arr = obj?.item ?? obj?.items ?? [];
+                                    if (Array.isArray(arr) && arr.length > 0) {
+                                        list = arr.map((it, i) => {
+                                            const id = it?.id ?? it?.item_id ?? "-";
+                                            const name = it?.name ?? it?.item_name_kr ?? it?.item_name_en ?? "";
+                                            const count = it?.count ?? "?";
+                                            const display = name ? `${name} x ${count}` : `ID ${id} x ${count}`;
+                                            return (
+                                                <div
+                                                    key={i}
+                                                    style={{
+                                                        display: "flex",
+                                                        alignItems: "center",
+                                                        padding: "8px 12px",
+                                                        background: "var(--app-bg-secondary, rgba(0,0,0,0.04))",
+                                                        borderRadius: "6px",
+                                                        marginBottom: "6px",
+                                                        border: "1px solid var(--app-border-color, rgba(0,0,0,0.08))",
+                                                        fontSize: "14px"
+                                                    }}
+                                                >
+                                                    <span style={{ marginRight: "10px", color: "var(--app-muted-text-color, #666)", fontWeight: 600 }}>{i + 1}.</span>
+                                                    <span>{display}</span>
+                                                </div>
+                                            );
+                                        });
+                                    }
+                                } catch (_) { /* ignore */ }
+                                if (!list || list.length === 0) return null;
+                                return (
+                                    <div className="map-section">
+                                        <h4>아이템 목록 (보상)</h4>
+                                        <div
+                                            style={{
+                                                marginTop: "8px",
+                                                padding: "12px",
+                                                background: "var(--app-bg-tertiary, #f8f9fa)",
+                                                borderRadius: "8px",
+                                                border: "1px solid var(--app-border-color, rgba(0,0,0,0.1))"
+                                            }}
+                                        >
+                                            {list}
+                                        </div>
+                                    </div>
+                                );
+                            })()}
+                            {["contents", "contents_kr", "category"].some((k) => selectedQuest[k]) && (
                                 <div className="map-section">
                                     <h4>기타</h4>
                                     <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-                                        {["contents", "contents_kr", "requirements", "rewards", "category"].map((k) => (
-                                            <div key={k} className="map-info-item">
-                                                <div className="map-info-label">{detailLabelMap[k] ?? k}</div>
-                                                <div className="map-info-value" style={{ whiteSpace: "pre-wrap", wordBreak: "break-word" }}>
-                                                    {renderDetailValue(k, selectedQuest[k])}
+                                        {["contents", "contents_kr", "category"].map((k) => {
+                                            const isContent = k === "contents" || k === "contents_kr";
+                                            const val = selectedQuest[k] ?? selectedQuest[k?.replace(/_/g, "")];
+                                            return (
+                                                <div key={k} className="map-info-item">
+                                                    <div className="map-info-label">{detailLabelMap[k] ?? k}</div>
+                                                    {isContent ? (val ? renderQuestContent(val) : <div className="map-info-value">-</div>) : (
+                                                        <div className="map-info-value" style={{ whiteSpace: "pre-wrap", wordBreak: "break-word" }}>
+                                                            {renderDetailValue(k, val)}
+                                                        </div>
+                                                    )}
                                                 </div>
-                                            </div>
-                                        ))}
+                                            );
+                                        })}
                                     </div>
                                 </div>
                             )}
