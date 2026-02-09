@@ -1,15 +1,15 @@
-/** API 베이스 URL. 브라우저면 접속한 호스트(서버IP)의 8080 사용 → 같은 망 다른 PC에서도 API 통신 가능 */
+/** API 베이스 URL. 브라우저면 접속한 호스트(서버IP)의 19080 사용 → 같은 망 다른 PC에서도 API 통신 가능 */
 const API_BASE_URL =
     typeof import.meta.env?.VITE_API_BASE_URL === "string" && import.meta.env.VITE_API_BASE_URL
         ? import.meta.env.VITE_API_BASE_URL
         : typeof window !== "undefined" && window?.location?.hostname
-            ? `http://${window.location.hostname}:8080/api`
-            : "http://localhost:8080/api";
+            ? `http://${window.location.hostname}:19080/api`
+            : "http://localhost:19080/api";
 
 /** 서버 루트(정적 리소스용). resources/static/ 하위는 루트로 서빙됨. 상대 경로면 현재 origin 사용 */
 export const API_ORIGIN =
     API_BASE_URL.startsWith("http")
-        ? API_BASE_URL.replace(/\/api\/?$/, "") || "http://localhost:8080"
+        ? API_BASE_URL.replace(/\/api\/?$/, "") || "http://localhost:19080"
         : (typeof window !== "undefined" ? window.location.origin : "");
 
 /**
