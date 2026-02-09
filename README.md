@@ -1,35 +1,41 @@
 # Maple Front
 
-React + Vite 기반 메이플 관련 프론트엔드 프로젝트입니다.
+이직 포트폴리오용 프론트엔드 프로젝트입니다. [Maple API](https://github.com/AnJinseok/maple-api)와 함께 사용하는 게임 데이터 조회 웹입니다.
+
+## About (프로젝트 개요)
+
+- **데이터**: Python 스크래핑 → API(Spring Boot) → **이 저장소(React)** 로 이어지는 파이프라인의 마지막 단계입니다.
+- **역할**: 맵·몬스터·NPC·퀘스트·아이템·고확 등을 검색·상세 조회하는 UI 제공.
+
+---
 
 ## 요구 사항
 
 - **Node.js** 18.x 이상 (20 LTS 권장)  
-  → 미설치 시 [nodejs.org](https://nodejs.org)에서 LTS 버전 다운로드
+  → [nodejs.org](https://nodejs.org) LTS 다운로드
 
-## 설치
+---
 
-프로젝트 루트에서 아래 한 번만 실행하면 `package.json`에 있는 의존성이 전부 설치됩니다.
+## 설치 및 실행
 
 ```bash
 npm install
+npm run dev
 ```
 
-**설치되는 주요 패키지 (package.json 기준)**
+개발 서버: **http://localhost:5173**
 
-| 구분 | 패키지 |
-|------|--------|
-| 런타임 | react, react-dom, react-router-dom |
-| UI | @mui/material, @emotion/react, @emotion/styled, @mui/x-date-pickers |
-| 날짜/피커 | dayjs, flatpickr, react-flatpickr |
-| 빌드/개발 | vite, @vitejs/plugin-react |
-| 린트 | eslint, @eslint/js, eslint-plugin-react-hooks, eslint-plugin-react-refresh |
+---
 
 ## 기술 스택
 
 - **React 18**
-- **Vite 7** — HMR 지원, 빠른 개발 서버
-- **ESLint** — 코드 검사
+- **Vite 7** — HMR, 빠른 개발 서버
+- **React Router**
+- **MUI (Material UI)** — UI 컴포넌트
+- **ESLint**
+
+---
 
 ## 스크립트
 
@@ -40,27 +46,30 @@ npm install
 | `npm run preview` | 빌드 결과물 미리보기 |
 | `npm run lint` | ESLint 실행 |
 
-## 사용 방법
+---
+
+## API 연동
+
+- **개발/빌드 공통**: `.env` 에 `VITE_API_BASE_URL=/api` 설정 (같은 서버 Nginx 사용 시)
+- Nginx 없이 API 직접 호출 시: `.env` 삭제 또는 주석 처리 → 기본값 `hostname:19080/api` 사용
+
+---
+
+## 프로덕션 빌드 및 배포
 
 ```bash
-# 의존성 설치
-npm install
-
-# 개발 서버 실행
-npm run dev
-```
-
-## 프로덕션 빌드 (리눅스 서버 배포)
-
-```bash
-# API 주소 설정: .env.production.example 을 참고해 .env.production 생성
-# (같은 서버 Nginx 사용 시 VITE_API_BASE_URL=/api)
 npm run build
 ```
 
-빌드 결과 `dist/` 를 Nginx 등으로 서빙하면 됩니다. **API 저장소의 [DEPLOY.md](https://github.com/AnJinseok/maple-api/blob/main/DEPLOY.md)** 에 리눅스 서버에서 API + Front 함께 받아서 실행하는 전체 순서가 정리되어 있습니다.
+`dist/` 를 Nginx 등으로 서빙하세요. API 저장소의 **[DEPLOY.md](https://github.com/AnJinseok/maple-api/blob/main/DEPLOY.md)** 에 API + Front 함께 배포하는 순서가 정리되어 있습니다.
 
-## 참고
+---
 
-- React Fast Refresh는 [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react) (Babel)을 사용합니다.
-- 프로덕션 빌드 시 TypeScript·타입 기반 ESLint를 쓰려면 [Vite TS 템플릿](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) 및 [typescript-eslint](https://typescript-eslint.io) 문서를 참고하세요.
+## 로그 (서버에서 개발 서버 실행 시)
+
+```bash
+chmod +x scripts/run-dev-with-log.sh
+./scripts/run-dev-with-log.sh
+```
+
+출력이 `logs/front.log` 에 저장됩니다.
