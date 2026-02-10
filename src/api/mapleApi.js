@@ -231,6 +231,29 @@ export async function fetchChronostoryNpcDetail(npcId, mapId) {
 }
 
 /**
+ * 크로노스토리 가챠 드롭(아이템) 목록 조회 - chronostory_gachapon_drop 테이블
+ * - 입력: params(object) 예: { page, size, keyword }
+ * - 출력: Promise(JSON) { data: { items, totalElements, page, size, totalPages } }
+ */
+export async function fetchChronostoryGachaponDrops(params = {}) {
+    const query = buildQuery(params);
+    const url = query ? `${API_BASE_URL}/chronostory/gachapon-drops?${query}` : `${API_BASE_URL}/chronostory/gachapon-drops`;
+    const response = await fetch(url);
+    if (!response.ok) throw new Error("가챠 드롭 목록 조회 실패");
+    return response.json();
+}
+
+/**
+ * 크로노스토리 가챠 드롭 machine_name 목록 (조회 조건 드롭다운용, GROUP BY 기준)
+ * - 출력: Promise(JSON) { data: string[] }
+ */
+export async function fetchChronostoryGachaponDropMachineNames() {
+    const response = await fetch(`${API_BASE_URL}/chronostory/gachapon-drops/machine-names`);
+    if (!response.ok) throw new Error("machine_name 목록 조회 실패");
+    return response.json();
+}
+
+/**
  * 크로노스토리 퀘스트 DB 목록 조회 (테이블 저장 데이터)
  * - 입력: params(object) 예: { page, size, keyword }
  * - 출력: Promise(JSON) { data: { items, totalElements, page, size, totalPages } }

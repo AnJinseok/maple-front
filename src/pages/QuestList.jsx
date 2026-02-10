@@ -347,10 +347,30 @@ export default function QuestList() {
                                         className={`map-list-item ${isSelected ? "selected" : ""}`}
                                         onClick={() => setSelectedQuest(item)}
                                     >
-                                        <div className="map-list-name">{getQuestDisplayName(item)}</div>
-                                        {getQuestMeta(item) && (
-                                            <div className="map-list-meta" style={{ marginTop: "4px" }}>{getQuestMeta(item)}</div>
-                                        )}
+                                        <div className="map-list-name" style={{ width: "100%", textAlign: "left" }}>
+                                            <div style={{ fontWeight: 800, lineHeight: 1.3, marginBottom: "2px" }}>
+                                                {getQuestDisplayName(item)}
+                                            </div>
+                                            {(() => {
+                                                const npc = item.npc_name ?? item.npcName ?? "";
+                                                const level = item.req_level ?? item.reqLevel ?? "";
+                                                const exp = item.reward_exp ?? item.rewardExp ?? "";
+                                                const leftParts = [];
+                                                if (String(npc).trim()) leftParts.push(String(npc).trim());
+                                                if (String(level).trim()) leftParts.push(`Lv.${level}`);
+                                                const leftStr = leftParts.join(" · ");
+                                                const hasExp = exp !== "" && exp != null && exp !== undefined;
+                                                if (!leftStr && !hasExp) return null;
+                                                return (
+                                                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", flexWrap: "wrap", gap: "6px 12px", fontSize: "12px", color: "var(--app-muted-text-color)" }}>
+                                                        <span>{leftStr || "-"}</span>
+                                                        <span style={{ fontWeight: 600, color: "var(--app-text-color)" }}>
+                                                            {hasExp ? `XP ${Number(exp).toLocaleString()}` : "-"}
+                                                        </span>
+                                                    </div>
+                                                );
+                                            })()}
+                                        </div>
                                     </button>
                                 );
                             })}
