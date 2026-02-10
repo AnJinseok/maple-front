@@ -118,6 +118,20 @@ export async function fetchItemOptions(params = {}) {
     return response.json();
 }
 
+/**
+ * 아이템 코드로 단건 조회 (장비/소비/기타 등 카테고리 확인용)
+ * - 입력: itemCode(number|string)
+ * - 출력: Promise(JSON) { data: { itemCode, name, category, subCategory, ... } } 또는 404 시 null
+ */
+export async function fetchItemDetailByCode(itemCode) {
+    const code = itemCode == null ? "" : String(itemCode).trim();
+    if (!code) return null;
+    const response = await fetch(`${API_BASE_URL}/items/${encodeURIComponent(code)}`);
+    if (response.status === 404) return null;
+    if (!response.ok) throw new Error("아이템 조회 실패");
+    return response.json();
+}
+
 /* =========================
    고확 리스트
 ========================= */
