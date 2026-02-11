@@ -83,6 +83,8 @@ export default function MapList() {
     const [selectedSpawnIndex, setSelectedSpawnIndex] = useState(null);
     /** 맵 이미지 로드 실패한 map_id 집합 (맵 박스에서 제외) */
     const [failedMapIds, setFailedMapIds] = useState(() => new Set());
+    /** 상세(맵 정보) 영역의 맵 이미지 로드 실패 여부 */
+    const [detailMapImageFailed, setDetailMapImageFailed] = useState(false);
     /** 맵 목록 현재 페이지 (1-based, 페이지 형식) */
     const [mapListPage, setMapListPage] = useState(1);
     /** NPC 검색 목록 현재 페이지 (1-based) */
@@ -506,6 +508,7 @@ export default function MapList() {
         if (!isSupportedWorld || !selectedMapKey) {
             setBundle(null);
             setDetailError(null);
+            setDetailMapImageFailed(false);
             // 조건문: 맵이 바뀌면 몬스터 선택도 초기화
             setSelectedMonsterKey(null);
             setSelectedMonsterRow(null);
@@ -531,6 +534,7 @@ export default function MapList() {
                 if (isCancelled || currentRequestId !== detailRequestIdRef.current) return;
                 const payload = res?.data ?? res;
                 setBundle(payload);
+                setDetailMapImageFailed(false);
             })
             .catch(err => {
                 // 조건문: 요청이 취소되었거나 더 최신 요청이 있으면 무시
@@ -1558,6 +1562,17 @@ export default function MapList() {
                             <div className="map-detail">
                                 <div className="map-section">
                                     <h4>맵 정보</h4>
+                                    {/* 맵 이미지: minimaps/{map_id}.png, 로드 실패 시 숨김 */}
+                                    {(selectedMapKey || bundle?.map?.map_id) && !detailMapImageFailed && getMapImageUrl(bundle?.map?.map_id ?? selectedMapKey) && (
+                                        <div className="map-detail-image-wrap" style={{ marginBottom: "12px" }}>
+                                            <img
+                                                src={getMapImageUrl(bundle?.map?.map_id ?? selectedMapKey)}
+                                                alt={bundle?.map?.map_name_kr || bundle?.map?.map_name_en || `맵 ${selectedMapKey}`}
+                                                style={{ maxWidth: "100%", height: "auto", borderRadius: "8px", display: "block" }}
+                                                onError={() => setDetailMapImageFailed(true)}
+                                            />
+                                        </div>
+                                    )}
                                     <div className="map-info-grid">
                                         <div className="map-info-item">
                                             <div className="map-info-label">타운(한글)</div>
