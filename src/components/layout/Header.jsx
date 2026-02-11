@@ -6,7 +6,7 @@ import { WORLD_SUGGESTIONS } from "../../constants/worldOptions";
 
 /**
  * 상단 헤더
- * - 입력: 없음
+ * - 입력: 없음 (사이드 토글은 사이드바에 위치)
  * - 출력: JSX(Element)
  */
 export default function Header() {
@@ -61,7 +61,7 @@ export default function Header() {
     return (
         <header className="header">
             <div className="header-inner">
-                {/* Left - Logo */}
+                {/* Left - 사이드 토글 + Logo */}
                 <div className="logo">
                     <Link to="/">MapleLand</Link>
                 </div>
@@ -97,7 +97,7 @@ export default function Header() {
 
                 {/* Right - Navigation */}
                 <nav className="nav">
-                    <Link to="/items">아이템</Link>
+                    <Link to="/items">가챠폰 목록</Link>
                     {/* 숨김: 길드, 마켓 */}
                     {/* <Link to="/guild">길드</Link>
                     <Link to="/market">마켓</Link> */}
