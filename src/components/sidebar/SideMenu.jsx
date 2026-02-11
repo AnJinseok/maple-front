@@ -2,20 +2,29 @@ import { NavLink } from "react-router-dom";
 
 /**
  * 좌측 사이드 메뉴(탭)
- * - 입력: 없음
+ * - 입력: isOpen(boolean), onToggle(function) — 열림 여부, 토글 콜백
  * - 출력: JSX(Element)
  */
-export default function SideMenu() {
+export default function SideMenu({ isOpen, onToggle }) {
     return (
-        <aside className="side-menu">
-            <nav>
+        <aside className="side-menu" aria-hidden={!isOpen}>
+            <nav className="side-menu-nav">
                 <ul className="menu-list">
+                    <li>
+                        <NavLink
+                            to="/"
+                            className={({ isActive }) => (isActive ? "active" : "")}
+                            end
+                        >
+                            홈
+                        </NavLink>
+                    </li>
                     <li>
                         <NavLink
                             to="/items"
                             className={({ isActive }) => (isActive ? "active" : "")}
                         >
-                            아이템 목록
+                            가챠폰 목록
                         </NavLink>
                     </li>
 
@@ -83,6 +92,17 @@ export default function SideMenu() {
                     </li>
                 </ul>
             </nav>
+            {onToggle && (
+                <button
+                    type="button"
+                    className="side-menu-toggle-btn"
+                    onClick={onToggle}
+                    aria-label={isOpen ? "사이드 메뉴 닫기" : "사이드 메뉴 열기"}
+                    title={isOpen ? "닫기" : "열기"}
+                >
+                    {isOpen ? "◀" : "▶"}
+                </button>
+            )}
         </aside>
     );
 }
