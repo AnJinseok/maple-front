@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useWorld } from "../contexts/WorldContext";
-import { fetchChronostoryQuests } from "../api/mapleApi";
+import { fetchChronostoryQuests, getNpcImageUrl, getNpcImageUrlByFilePath } from "../api/mapleApi";
 
 const CSV_PATH = "/data/QuestDatabase.csv";
 
@@ -196,8 +196,8 @@ export default function QuestList() {
         quest_name_kr: "퀘스트명(한글)",
         region: "지역",
         region_name: "지역명",
-        npc_id: "수주 NPC ID",
-        npc_name: "NPC명",
+        npc_id: "제공자 NPC ID",
+        npc_name: "퀘스트 제공자",
         parent_name: "상위명",
         quest_order: "순서",
         sort_order: "정렬",
@@ -388,10 +388,30 @@ export default function QuestList() {
                     )}
                     {selectedQuest && (
                         <div className="map-detail">
+                            {(() => {
+                                const npcPath = selectedQuest.npc_file_path ?? selectedQuest.npcFilePath ?? "";
+                                const npcImgUrl = npcPath ? getNpcImageUrlByFilePath(npcPath) : getNpcImageUrl(selectedQuest.npc_id ?? selectedQuest.npcId);
+                                const npcName = selectedQuest.npc_name ?? selectedQuest.npcName ?? "";
+                                if (!npcImgUrl) return null;
+                                return (
+                                    <div className="map-section" style={{ marginBottom: "16px" }}>
+                                        <h4>퀘스트 제공자</h4>
+                                        <div style={{ display: "flex", alignItems: "center", gap: "12px", flexWrap: "wrap" }}>
+                                            <img
+                                                src={npcImgUrl}
+                                                alt={npcName || "NPC"}
+                                                style={{ width: 64, height: 64, objectFit: "contain", borderRadius: "8px", background: "var(--app-bg-secondary, #f0f0f0)" }}
+                                                onError={(e) => { e.target.style.display = "none"; }}
+                                            />
+                                            {npcName && <span style={{ fontWeight: 600, fontSize: "15px" }}>{npcName}</span>}
+                                        </div>
+                                    </div>
+                                );
+                            })()}
                             <div className="map-section">
                                 <h4>기본 정보</h4>
                                 <div className="map-info-grid">
-                                    {["quest_id", "quest_name", "quest_name_kr", "region", "region_name", "npc_id", "npc_name", "parent_name", "quest_order", "req_level", "req_jobs"].map((k) => {
+                                    {["quest_name", "quest_name_kr", "region", "region_name", "npc_id", "npc_name", "parent_name", "quest_order", "req_level", "req_jobs"].map((k) => {
                                         const label = detailLabelMap[k] ?? k;
                                         const val = selectedQuest[k] ?? selectedQuest[k.replace(/_/g, "")] ?? "";
                                         return (
