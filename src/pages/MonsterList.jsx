@@ -24,7 +24,7 @@ export default function MonsterList() {
     const [keywordInput, setKeywordInput] = useState("");
     const [keyword, setKeyword] = useState("");
     const [page, setPage] = useState(0);
-    const [size] = useState(50);
+    const [size, setSize] = useState(7);
     const [monsterResults, setMonsterResults] = useState([]);
     const [totalElements, setTotalElements] = useState(0);
     const [totalPages, setTotalPages] = useState(0);
@@ -337,29 +337,43 @@ export default function MonsterList() {
                                 );
                             })}
                         </div>
-                        {totalPages > 1 && (
-                            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "8px", marginTop: "12px", paddingTop: "8px", borderTop: "1px solid var(--app-border)" }}>
-                                <button
-                                    type="button"
-                                    className="map-btn"
-                                    disabled={page <= 0 || listLoading}
-                                    onClick={() => setPage((p) => Math.max(0, p - 1))}
+                        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "8px", marginTop: "12px", paddingTop: "8px", borderTop: "1px solid var(--app-border)" }}>
+                            {totalPages > 1 && (
+                                <>
+                                    <button
+                                        type="button"
+                                        className="map-btn"
+                                        disabled={page <= 0 || listLoading}
+                                        onClick={() => setPage((p) => Math.max(0, p - 1))}
+                                    >
+                                        이전
+                                    </button>
+                                    <span style={{ fontSize: "13px", color: "var(--app-muted-text-color)" }}>
+                                        {page + 1} / {totalPages} (총 {totalElements.toLocaleString()}건)
+                                    </span>
+                                    <button
+                                        type="button"
+                                        className="map-btn"
+                                        disabled={page >= totalPages - 1 || listLoading}
+                                        onClick={() => setPage((p) => Math.min(totalPages - 1, p + 1))}
+                                    >
+                                        다음
+                                    </button>
+                                </>
+                            )}
+                            {/* <label style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "13px", color: "var(--app-muted-text-color)", marginLeft: totalPages > 1 ? 0 : "auto" }}>
+                                페이지 크기
+                                <select
+                                    value={size}
+                                    onChange={(e) => { setSize(Number(e.target.value)); setPage(0); }}
+                                    style={{ padding: "6px 8px", borderRadius: "6px", border: "1px solid var(--app-border)" }}
                                 >
-                                    이전
-                                </button>
-                                <span style={{ fontSize: "13px", color: "var(--app-muted-text-color)" }}>
-                                    {page + 1} / {totalPages} (총 {totalElements.toLocaleString()}건)
-                                </span>
-                                <button
-                                    type="button"
-                                    className="map-btn"
-                                    disabled={page >= totalPages - 1 || listLoading}
-                                    onClick={() => setPage((p) => Math.min(totalPages - 1, p + 1))}
-                                >
-                                    다음
-                                </button>
-                            </div>
-                        )}
+                                    {[20, 50, 100, 200].map((n) => (
+                                        <option key={n} value={n}>{n}</option>
+                                    ))}
+                                </select>
+                            </label> */}
+                        </div>
                         </>
                     )}
                     {!listLoading && keyword === "" && monsterResults.length === 0 && (
