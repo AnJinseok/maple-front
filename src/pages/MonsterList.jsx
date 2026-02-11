@@ -23,7 +23,11 @@ export default function MonsterList() {
 
     const [keywordInput, setKeywordInput] = useState("");
     const [keyword, setKeyword] = useState("");
+    const [page, setPage] = useState(0);
+    const [size] = useState(50);
     const [monsterResults, setMonsterResults] = useState([]);
+    const [totalElements, setTotalElements] = useState(0);
+    const [totalPages, setTotalPages] = useState(0);
     const [listLoading, setListLoading] = useState(false);
     const [listError, setListError] = useState(null);
 
@@ -152,6 +156,7 @@ export default function MonsterList() {
     function handleSearch(e) {
         e.preventDefault();
         setKeyword(keywordInput.trim());
+        setPage(0);
     }
 
     function handleSelectMonsterRow(row, index) {
@@ -236,11 +241,14 @@ export default function MonsterList() {
         setListLoading(true);
         setListError(null);
         const fetchMonsters = isMapleLandWorld ? fetchMaplelandMonsters : fetchChronostoryMonsters;
-        fetchMonsters({ page: 0, size: 200, keyword: keyword && keyword.trim() ? keyword.trim() : undefined })
+        fetchMonsters({ page, size, keyword: keyword && keyword.trim() ? keyword.trim() : undefined })
             .then(res => {
                 if (cancelled || currentId !== listRequestIdRef.current) return;
-                const list = res?.data?.items ?? res?.items ?? [];
+                const payload = res?.data ?? res;
+                const list = payload?.items ?? res?.items ?? [];
                 setMonsterResults(Array.isArray(list) ? list : []);
+                setTotalElements(Number(payload?.totalElements ?? 0));
+                setTotalPages(Number(payload?.totalPages ?? 0));
             })
             .catch(err => {
                 if (cancelled || currentId !== listRequestIdRef.current) return;
@@ -251,7 +259,7 @@ export default function MonsterList() {
                 if (!cancelled && currentId === listRequestIdRef.current) setListLoading(false);
             });
         return () => { cancelled = true; };
-    }, [isSupportedWorld, world, keyword, isMapleLandWorld]);
+    }, [isSupportedWorld, world, keyword, page, size, isMapleLandWorld]);
 
     if (!isSupportedWorld) {
         return (
@@ -276,7 +284,7 @@ export default function MonsterList() {
                 <section className="map-card map-list-card">
                     <div className="map-card-header">
                         <h3>몬스터 검색</h3>
-                        <span className="map-badge">{monsterResults.length}개</span>
+                        <span className="map-badge">{totalElements > 0 ? `${totalElements.toLocaleString()}개` : `${monsterResults.length}개`}</span>
                     </div>
                     <form className="map-search" onSubmit={handleSearch}>
                         <input
@@ -294,6 +302,7 @@ export default function MonsterList() {
                         <div className="map-empty">조회 결과가 없습니다.</div>
                     )}
                     {!listLoading && !listError && monsterResults.length > 0 && (
+                        <>
                         <div className="map-list">
                             {monsterResults.map((row, index) => {
                                 const display = getMonsterDisplay(row);
@@ -328,6 +337,30 @@ export default function MonsterList() {
                                 );
                             })}
                         </div>
+                        {totalPages > 1 && (
+                            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "8px", marginTop: "12px", paddingTop: "8px", borderTop: "1px solid var(--app-border)" }}>
+                                <button
+                                    type="button"
+                                    className="map-btn"
+                                    disabled={page <= 0 || listLoading}
+                                    onClick={() => setPage((p) => Math.max(0, p - 1))}
+                                >
+                                    이전
+                                </button>
+                                <span style={{ fontSize: "13px", color: "var(--app-muted-text-color)" }}>
+                                    {page + 1} / {totalPages} (총 {totalElements.toLocaleString()}건)
+                                </span>
+                                <button
+                                    type="button"
+                                    className="map-btn"
+                                    disabled={page >= totalPages - 1 || listLoading}
+                                    onClick={() => setPage((p) => Math.min(totalPages - 1, p + 1))}
+                                >
+                                    다음
+                                </button>
+                            </div>
+                        )}
+                        </>
                     )}
                     {!listLoading && keyword === "" && monsterResults.length === 0 && (
                         <div className="map-empty">몬스터 목록을 불러오는 중이거나 데이터가 없습니다. 검색어를 입력하면 필터할 수 있습니다.</div>
@@ -351,7 +384,8 @@ export default function MonsterList() {
                         )}
                         {selectedRow && !mobDetailLoading && !mobDetailError && mobDetail && (
                             <div className="map-kv">
-                                <div style={{
+                                {/* 모바일에서는 1열로 쌓여 드롭 아이템이 아래에 표시됨 */}
+                                <div className="map-monster-detail-grid" style={{
                                     display: "grid",
                                     gridTemplateColumns: "minmax(0, 1fr) minmax(280px, 1fr)",
                                     gap: "24px",
@@ -370,7 +404,7 @@ export default function MonsterList() {
                                                     ) : null;
                                                 })()}
                                                 <div className="map-kv-label" style={{ fontWeight: "bold", marginBottom: "4px" }}>몬스터 능력치</div>
-                                                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(120px, 160px))", gap: "8px" }}>
+                                                <div className="map-card-body-stats-grid">
                                                     {buildMonsterDetailEntries(mobDetail.mob).map((entry, idx) => (
                                                         <div
                                                             key={`mob-${entry.label}-${idx}`}

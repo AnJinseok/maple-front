@@ -83,6 +83,15 @@ export default function MapList() {
     const [selectedSpawnIndex, setSelectedSpawnIndex] = useState(null);
     /** 맵 이미지 로드 실패한 map_id 집합 (맵 박스에서 제외) */
     const [failedMapIds, setFailedMapIds] = useState(() => new Set());
+    /** 맵 목록 현재 페이지 (1-based, 페이지 형식) */
+    const [mapListPage, setMapListPage] = useState(1);
+    /** NPC 검색 목록 현재 페이지 (1-based) */
+    const [npcListPage, setNpcListPage] = useState(1);
+    const LIST_PAGE_SIZE = 7;
+    /** 맵 목록 필터: 각각 전체 | 보이기 | 숨기기 */
+    const [filterNpc, setFilterNpc] = useState("all");
+    const [filterMonster, setFilterMonster] = useState("all");
+    const [filterQuest, setFilterQuest] = useState("all");
 
     // 중복 요청 방지를 위한 요청 ID 추적
     const listRequestIdRef = useRef(0);
@@ -231,6 +240,8 @@ export default function MapList() {
         setDetailError(null);
         setMaps([]);
         setNpcResults([]);
+        setMapListPage(1);
+        setNpcListPage(1);
     }
 
     /**
@@ -409,6 +420,8 @@ export default function MapList() {
 
         setListLoading(true);
         setListError(null);
+        setMapListPage(1);
+        setNpcListPage(1);
 
         // 조건문: 검색 타입에 따라 서로 다른 API 호출
         if (searchType === "town") {
@@ -430,7 +443,7 @@ export default function MapList() {
                     } else {
                         setMaps(list);
                     }
-
+                    setMapListPage(1);
                     setNpcResults([]);
                 })
                 .catch(err => {
@@ -463,7 +476,7 @@ export default function MapList() {
                     } else {
                         setNpcResults(list);
                     }
-
+                    setNpcListPage(1);
                     setMaps([]);
                 })
                 .catch(err => {
@@ -1193,6 +1206,42 @@ export default function MapList() {
         return value.toLocaleString();
     }
 
+    /** 맵 목록 필터 적용 (NPC/몬스터/퀘스트 각각 보이기·숨기기)
+     * - 보이기: 해당 항목이 있는 맵만 표시 (해당 없는 맵은 리스트에서 제외)
+     * - 숨기기: 해당 항목이 있는 맵을 리스트에서 제외 (해당 없는 맵만 표시) */
+    const filteredMaps = useMemo(() => {
+        if (!Array.isArray(maps) || maps.length === 0) return [];
+        return maps.filter((row) => {
+            // NPC 존재 여부: hasNpc 없으면 npcCount > 0 으로 보완 (메이플랜드 등 API 호환)
+            const npcCnt = Number(row?.npcCount ?? row?.npc_count ?? 0);
+            const hasNpc = Boolean(row?.hasNpc) || (Number.isFinite(npcCnt) && npcCnt >= 1);
+            // 몬스터 존재 여부: hasMonsters 없으면 monsterCount > 0 으로 보완
+            const monCnt = Number(row?.monsterCount ?? row?.monster_count ?? 0);
+            const hasMonsters = Boolean(row?.hasMonsters) || (Number.isFinite(monCnt) && monCnt >= 1);
+            // 퀘스트 개수: API 필드(questCount/quest_count)를 숫자로 변환, NaN/비정상 값은 0으로 간주
+            const rawQuest = row?.questCount ?? row?.quest_count ?? 0;
+            const questCount = Number(rawQuest);
+            const hasQuest = Number.isFinite(questCount) && questCount >= 1;
+            // 보이기 선택 시: 해당 없는 맵은 리스트에서 제외 (해당 있는 맵만 표시)
+            if (filterNpc === "show" && !hasNpc) return false;
+            if (filterMonster === "show" && !hasMonsters) return false;
+            if (filterQuest === "show" && !hasQuest) return false;
+            // 숨기기 선택 시: 해당 있는 맵은 리스트에서 제외 (해당 없는 맵만 표시)
+            if (filterNpc === "hide" && hasNpc) return false;
+            if (filterMonster === "hide" && hasMonsters) return false;
+            if (filterQuest === "hide" && hasQuest) return false;
+            return true;
+        });
+    }, [maps, filterNpc, filterMonster, filterQuest]);
+
+    // 페이지네이션: 총 페이지 수 및 현재 페이지(범위 보정)
+    const totalMapPages = Math.max(1, Math.ceil(filteredMaps.length / LIST_PAGE_SIZE));
+    const totalNpcPages = Math.max(1, Math.ceil(npcResults.length / LIST_PAGE_SIZE));
+    const mapPage = Math.min(Math.max(1, mapListPage), totalMapPages);
+    const npcPage = Math.min(Math.max(1, npcListPage), totalNpcPages);
+    const mapListSlice = filteredMaps.slice((mapPage - 1) * LIST_PAGE_SIZE, mapPage * LIST_PAGE_SIZE);
+    const npcListSlice = npcResults.slice((npcPage - 1) * LIST_PAGE_SIZE, npcPage * LIST_PAGE_SIZE);
+
     return (
         <div className="map-page">
             <div className="map-header">
@@ -1222,7 +1271,10 @@ export default function MapList() {
                                 {searchType === "town" ? "맵 목록" : "NPC 검색"}
                             </h3>
                             <span className="map-badge">
-                                {searchType === "town" ? `${maps.length}개` : `${npcResults.length}개`}
+                                {searchType === "town" ? `${filteredMaps.length}개` : `${npcResults.length}개`}
+                                {searchType === "town" && (filterNpc !== "all" || filterMonster !== "all" || filterQuest !== "all") && ` (전체 ${maps.length}개 중)`}
+                                {searchType === "town" && totalMapPages > 1 && ` (${mapPage}/${totalMapPages}페이지)`}
+                                {searchType === "npc" && totalNpcPages > 1 && ` (${npcPage}/${totalNpcPages}페이지)`}
                             </span>
                         </div>
 
@@ -1250,6 +1302,48 @@ export default function MapList() {
                             </button>
                         </form>
 
+                        {/* 맵 목록일 때만: NPC / 몬스터 / 퀘스트 필터 select 3개 (공간 활용, 잘리지 않도록) */}
+                        {searchType === "town" && maps.length > 0 && (
+                            <div className="map-list-filters" style={{ display: "flex", flexWrap: "wrap", gap: "8px 10px", marginBottom: "12px", alignItems: "center" }}>
+                                <label style={{ fontSize: "13px", whiteSpace: "nowrap" }}>
+                                    <span style={{ color: "var(--app-muted-text-color)", marginRight: "4px" }}>NPC</span>
+                                    <select
+                                        className="map-search-select"
+                                        value={filterNpc}
+                                        onChange={(e) => { setFilterNpc(e.target.value); setMapListPage(1); }}
+                                    >
+                                        <option value="all">전체</option>
+                                        <option value="show">보이기</option>
+                                        <option value="hide">숨기기</option>
+                                    </select>
+                                </label>
+                                <label style={{ fontSize: "13px", whiteSpace: "nowrap" }}>
+                                    <span style={{ color: "var(--app-muted-text-color)", marginRight: "4px" }}>몬스터</span>
+                                    <select
+                                        className="map-search-select"
+                                        value={filterMonster}
+                                        onChange={(e) => { setFilterMonster(e.target.value); setMapListPage(1); }}
+                                    >
+                                        <option value="all">전체</option>
+                                        <option value="show">보이기</option>
+                                        <option value="hide">숨기기</option>
+                                    </select>
+                                </label>
+                                <label style={{ fontSize: "13px", whiteSpace: "nowrap" }}>
+                                    <span style={{ color: "var(--app-muted-text-color)", marginRight: "4px" }}>퀘스트</span>
+                                    <select
+                                        className="map-search-select"
+                                        value={filterQuest}
+                                        onChange={(e) => { setFilterQuest(e.target.value); setMapListPage(1); }}
+                                    >
+                                        <option value="all">전체</option>
+                                        <option value="show">보이기</option>
+                                        <option value="hide">숨기기</option>
+                                    </select>
+                                </label>
+                            </div>
+                        )}
+
                         {listLoading && <div className="map-empty">로딩 중...</div>}
                         {listError && <div className="map-error">{listError}</div>}
 
@@ -1263,9 +1357,10 @@ export default function MapList() {
 
                         {/* 타운(맵) 검색 결과: map_name_kr(map_name_en) 형식, 몬스터/NPC 존재 여부에 따른 배경 음영 */}
                         {!listLoading && !listError && searchType === "town" && maps.length > 0 && (
+                            <>
                             <div className="map-list">
-                                {/* 루프: 맵 목록 렌더 */}
-                                {maps.map((row, index) => {
+                                {/* 루프: 맵 목록 렌더 (필터 + 현재 페이지 구간) */}
+                                {mapListSlice.map((row, index) => {
                                     const id = getMapIdFromRow(row) || `row-${index}`;
                                     // 입력: row(맵 데이터) -> 출력: { kr, en } (2줄 렌더링용)
                                     const displayParts = getMapListDisplayParts(row);
@@ -1320,13 +1415,58 @@ export default function MapList() {
                                     );
                                 })}
                             </div>
+                            {/* 맵 목록 페이지네이션: 처음 / 이전 / 페이지 번호 / 다음 / 끝 */}
+                            {totalMapPages > 1 && (
+                                <div className="map-pagination" style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "6px", marginTop: "4px", flexWrap: "wrap" }}>
+                                    <button
+                                        type="button"
+                                        className="map-btn"
+                                        disabled={mapPage <= 1}
+                                        onClick={() => setMapListPage(1)}
+                                    >
+                                        처음
+                                    </button>
+                                    <button
+                                        type="button"
+                                        className="map-btn"
+                                        disabled={mapPage <= 1}
+                                        onClick={() => setMapListPage((p) => Math.max(1, p - 1))}
+                                    >
+                                        이전
+                                    </button>
+                                    <span style={{ fontSize: "13px", color: "var(--app-muted-text-color)" }}>
+                                        {mapPage} / {totalMapPages}
+                                    </span>
+                                    <button
+                                        type="button"
+                                        className="map-btn"
+                                        disabled={mapPage >= totalMapPages}
+                                        onClick={() => setMapListPage((p) => Math.min(totalMapPages, p + 1))}
+                                    >
+                                        다음
+                                    </button>
+                                    <button
+                                        type="button"
+                                        className="map-btn"
+                                        disabled={mapPage >= totalMapPages}
+                                        onClick={() => setMapListPage(totalMapPages)}
+                                    >
+                                        끝
+                                    </button>
+                                </div>
+                            )}
+                            {filteredMaps.length === 0 && (
+                                <div className="map-empty">해당 조건에 맞는 맵이 없습니다.</div>
+                            )}
+                            </>
                         )}
 
                         {/* NPC 검색 결과 */}
                         {!listLoading && !listError && searchType === "npc" && npcResults.length > 0 && (
+                            <>
                             <div className="map-list">
-                                {/* 루프: NPC 검색 결과 렌더 */}
-                                {npcResults.map((row, index) => {
+                                {/* 루프: NPC 검색 결과 렌더 (현재 페이지 구간) */}
+                                {npcListSlice.map((row, index) => {
                                     const display = getNpcDisplay(row);
                                     const townKr = row?.town_name_kr ?? "-";
                                     const mapKr = row?.map_name_kr ?? "-";
@@ -1347,6 +1487,47 @@ export default function MapList() {
                                     );
                                 })}
                             </div>
+                            {/* NPC 목록 페이지네이션: 처음 / 이전 / 페이지 번호 / 다음 / 끝 */}
+                            {totalNpcPages > 1 && (
+                                <div className="map-pagination" style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "6px", marginTop: "4px", flexWrap: "wrap" }}>
+                                    <button
+                                        type="button"
+                                        className="map-btn"
+                                        disabled={npcPage <= 1}
+                                        onClick={() => setNpcListPage(1)}
+                                    >
+                                        처음
+                                    </button>
+                                    <button
+                                        type="button"
+                                        className="map-btn"
+                                        disabled={npcPage <= 1}
+                                        onClick={() => setNpcListPage((p) => Math.max(1, p - 1))}
+                                    >
+                                        이전
+                                    </button>
+                                    <span style={{ fontSize: "13px", color: "var(--app-muted-text-color)" }}>
+                                        {npcPage} / {totalNpcPages}
+                                    </span>
+                                    <button
+                                        type="button"
+                                        className="map-btn"
+                                        disabled={npcPage >= totalNpcPages}
+                                        onClick={() => setNpcListPage((p) => Math.min(totalNpcPages, p + 1))}
+                                    >
+                                        다음
+                                    </button>
+                                    <button
+                                        type="button"
+                                        className="map-btn"
+                                        disabled={npcPage >= totalNpcPages}
+                                        onClick={() => setNpcListPage(totalNpcPages)}
+                                    >
+                                        끝
+                                    </button>
+                                </div>
+                            )}
+                            </>
                         )}
                     </section>
 
@@ -1539,8 +1720,8 @@ export default function MapList() {
                                 )}
                                 {!mobDetailLoading && !mobDetailError && mobDetail && (
                                     <>
-                                        {/* 레이아웃: 왼쪽 = 몬스터 능력치, 오른쪽 = 드롭템 */}
-                                        <div style={{ 
+                                        {/* 레이아웃: 왼쪽 = 몬스터 능력치, 오른쪽 = 드롭템 (모바일에서는 1열로 쌓임) */}
+                                        <div className="map-monster-detail-grid" style={{ 
                                             display: "grid", 
                                             gridTemplateColumns: "minmax(0, 1fr) minmax(280px, 1fr)", 
                                             gap: "24px", 
@@ -1562,7 +1743,7 @@ export default function MapList() {
                                                         })()}
                                                         {/* 능력치 카드 그리드 */}
                                                         <div className="map-kv-label" style={{ fontWeight: "bold", marginBottom: "4px" }}>몬스터 능력치</div>
-                                                        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(120px, 160px))", gap: "8px" }}>
+                                                        <div className="map-card-body-stats-grid">
                                                             {buildMonsterDetailEntries(mobDetail.mob).map((entry, idx) => (
                                                                 <div
                                                                     key={`mob-${entry.label}-${idx}`}
