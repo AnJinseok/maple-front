@@ -293,6 +293,16 @@ export async function fetchChronostoryGachaponDropMachineNames() {
 }
 
 /**
+ * 크로노스토리 가챠 드롭 sub_type 목록 (chronostory_item_info_scrap GROUP BY sub_type, 조회 조건 드롭다운용)
+ * - 출력: Promise(JSON) { data: string[] }
+ */
+export async function fetchChronostoryGachaponDropSubTypes() {
+    const response = await fetch(`${API_BASE_URL}/chronostory/gachapon-drops/sub-types`);
+    if (!response.ok) throw new Error("sub_type 목록 조회 실패");
+    return response.json();
+}
+
+/**
  * 크로노스토리 퀘스트 DB 목록 조회 (테이블 저장 데이터)
  * - 입력: params(object) 예: { page, size, keyword }
  * - 출력: Promise(JSON) { data: { items, totalElements, page, size, totalPages } }

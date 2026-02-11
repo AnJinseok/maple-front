@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { fetchChronostoryGachaponDrops, fetchChronostoryGachaponDropMachineNames, fetchItemDetailByCode, getItemImageUrl } from "../api/mapleApi";
+import { fetchChronostoryGachaponDrops, fetchChronostoryGachaponDropMachineNames, fetchChronostoryGachaponDropSubTypes, fetchItemDetailByCode, getItemImageUrl } from "../api/mapleApi";
 
 /** 행 순서 컬럼 키 (데이터 없이 표시만) */
 const ROW_ORDER_KEY = "_row";
@@ -19,7 +19,9 @@ const COLUMN_LABELS = {
     name_kr: "이름(한글)",
     quantity: "수량",
     percent_text: "확률",
-    drop_chance: "드롭확률"
+    drop_chance: "드롭확률",
+    type: "타입",
+    sub_type: "서브타입"
 };
 
 /** 컬럼별 폭 (추가 열 넣을 수 있도록 핵심 컬럼만 좁게) */
@@ -37,7 +39,9 @@ const COLUMN_WIDTHS = {
     name_kr: "120px",
     quantity: "56px",
     percent_text: "72px",
-    drop_chance: "80px"
+    drop_chance: "80px",
+    type: "90px",
+    sub_type: "100px"
 };
 
 /**
@@ -58,10 +62,13 @@ export default function ItemList() {
     const [itemName, setItemName] = useState("");
     const [itemNameKr, setItemNameKr] = useState("");
     const [machineName, setMachineName] = useState("");
+    const [subType, setSubType] = useState("");
     const [submitItemName, setSubmitItemName] = useState("");
     const [submitItemNameKr, setSubmitItemNameKr] = useState("");
     const [submitMachineName, setSubmitMachineName] = useState("");
+    const [submitSubType, setSubmitSubType] = useState("");
     const [machineNames, setMachineNames] = useState([]);
+    const [subTypes, setSubTypes] = useState([]);
     const [page, setPage] = useState(0);
     const [size, setSize] = useState(50);
     const [data, setData] = useState(null);
@@ -86,6 +93,20 @@ export default function ItemList() {
         return () => { cancelled = true; };
     }, []);
 
+    useEffect(() => {
+        let cancelled = false;
+        fetchChronostoryGachaponDropSubTypes()
+            .then((res) => {
+                if (cancelled) return;
+                const list = res?.data ?? res ?? [];
+                setSubTypes(Array.isArray(list) ? list : []);
+            })
+            .catch(() => {
+                if (!cancelled) setSubTypes([]);
+            });
+        return () => { cancelled = true; };
+    }, []);
+
     const load = useCallback(async () => {
         setLoading(true);
         setError(null);
@@ -94,6 +115,7 @@ export default function ItemList() {
                 itemName: submitItemName.trim() || undefined,
                 itemNameKr: submitItemNameKr.trim() || undefined,
                 machineName: submitMachineName.trim() || undefined,
+                subType: submitSubType.trim() || undefined,
                 page,
                 size
             });
@@ -105,7 +127,7 @@ export default function ItemList() {
         } finally {
             setLoading(false);
         }
-    }, [submitItemName, submitItemNameKr, submitMachineName, page, size]);
+    }, [submitItemName, submitItemNameKr, submitMachineName, submitSubType, page, size]);
 
     useEffect(() => {
         load();
@@ -116,6 +138,7 @@ export default function ItemList() {
         setSubmitItemName(itemName);
         setSubmitItemNameKr(itemNameKr);
         setSubmitMachineName(machineName);
+        setSubmitSubType(subType);
         setPage(0);
     };
 
@@ -178,6 +201,19 @@ export default function ItemList() {
                                     <option value="">전체</option>
                                     {machineNames.map((name) => (
                                         <option key={name} value={name}>{name}</option>
+                                    ))}
+                                </select>
+                            </label>
+                            <label style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "14px" }}>
+                                서브타입
+                                <select
+                                    value={subType}
+                                    onChange={(e) => setSubType(e.target.value)}
+                                    style={{ padding: "6px 8px", borderRadius: "6px", border: "1px solid var(--app-border)", minWidth: "140px" }}
+                                >
+                                    <option value="">전체</option>
+                                    {subTypes.map((st) => (
+                                        <option key={st} value={st}>{st}</option>
                                     ))}
                                 </select>
                             </label>
