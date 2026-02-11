@@ -116,7 +116,7 @@ export default function QuestList() {
     const [search, setSearch] = useState("");
     const [submitSearch, setSubmitSearch] = useState("");
     const [page, setPage] = useState(0);
-    const [size, setSize] = useState(7);
+    const [size, setSize] = useState(10);
     const [totalElements, setTotalElements] = useState(0);
     const [totalPages, setTotalPages] = useState(0);
     const [selectedQuest, setSelectedQuest] = useState(null);
@@ -342,6 +342,7 @@ export default function QuestList() {
                     )}
                     {isChronoStoryWorld && !loading && (source === "api" || source === "csv") && questItems.length > 0 && (
                         <>
+                        <div className="map-list-and-pagination">
                         <div className="map-list">
                             {questItems.map((item, index) => {
                                 const key = getQuestKey(item, index);
@@ -382,7 +383,7 @@ export default function QuestList() {
                             })}
                         </div>
                         {totalPages > 1 && (
-                            <div className="map-pagination" style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "8px", marginTop: "12px", paddingTop: "8px", borderTop: "1px solid var(--app-border)" }}>
+                            <div className="map-pagination" style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "8px", paddingTop: "8px", borderTop: "1px solid var(--app-border)" }}>
                                 <button
                                     type="button"
                                     className="map-btn"
@@ -418,6 +419,7 @@ export default function QuestList() {
                                 </select>
                             </label>
                         )} */}
+                        </div>
                         </>
                     )}
                 </section>

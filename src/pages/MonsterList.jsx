@@ -24,12 +24,17 @@ export default function MonsterList() {
     const [keywordInput, setKeywordInput] = useState("");
     const [keyword, setKeyword] = useState("");
     const [page, setPage] = useState(0);
-    const [size, setSize] = useState(7);
+    const [size, setSize] = useState(10);
     const [monsterResults, setMonsterResults] = useState([]);
     const [totalElements, setTotalElements] = useState(0);
     const [totalPages, setTotalPages] = useState(0);
     const [listLoading, setListLoading] = useState(false);
     const [listError, setListError] = useState(null);
+
+    /* 리스트 필터: 출몰여부, 레벨순, 경험치순 */
+    const [filterSpawn, setFilterSpawn] = useState("all");
+    const [sortLevel, setSortLevel] = useState("default");
+    const [sortXp, setSortXp] = useState("default");
 
     const [selectedRow, setSelectedRow] = useState(null);
     const [selectedRowIndex, setSelectedRowIndex] = useState(null);
@@ -241,7 +246,14 @@ export default function MonsterList() {
         setListLoading(true);
         setListError(null);
         const fetchMonsters = isMapleLandWorld ? fetchMaplelandMonsters : fetchChronostoryMonsters;
-        fetchMonsters({ page, size, keyword: keyword && keyword.trim() ? keyword.trim() : undefined })
+        const apiParams = {
+            page,
+            size,
+            ...(keyword && keyword.trim() ? { keyword: keyword.trim() } : {}),
+            ...(filterSpawn === "yes" ? { hasSpawn: true } : filterSpawn === "no" ? { hasSpawn: false } : {}),
+            ...(sortLevel !== "default" ? { sortBy: "level", sortOrder: sortLevel } : sortXp !== "default" ? { sortBy: "xp", sortOrder: sortXp } : {}),
+        };
+        fetchMonsters(apiParams)
             .then(res => {
                 if (cancelled || currentId !== listRequestIdRef.current) return;
                 const payload = res?.data ?? res;
@@ -259,7 +271,7 @@ export default function MonsterList() {
                 if (!cancelled && currentId === listRequestIdRef.current) setListLoading(false);
             });
         return () => { cancelled = true; };
-    }, [isSupportedWorld, world, keyword, page, size, isMapleLandWorld]);
+    }, [isSupportedWorld, world, keyword, page, size, isMapleLandWorld, filterSpawn, sortLevel, sortXp]);
 
     if (!isSupportedWorld) {
         return (
@@ -296,6 +308,47 @@ export default function MonsterList() {
                         />
                         <button className="btn btn-primary" type="submit" disabled={listLoading}>검색</button>
                     </form>
+                    {/* 출몰여부, 레벨순, 경험치순 필터(DB 조회 반영) */}
+                    {!listLoading && !listError && (keyword !== "" || monsterResults.length > 0) && (
+                        <div className="map-list-filters">
+                            <label style={{ fontSize: "13px", whiteSpace: "nowrap" }}>
+                                <span style={{ color: "var(--app-muted-text-color)", marginRight: "4px" }}>출몰여부</span>
+                                <select
+                                    className="map-search-select"
+                                    value={filterSpawn}
+                                    onChange={(e) => { setFilterSpawn(e.target.value); setPage(0); }}
+                                >
+                                    <option value="all">전체</option>
+                                    <option value="yes">출몰 있음</option>
+                                    <option value="no">출몰 없음</option>
+                                </select>
+                            </label>
+                            <label style={{ fontSize: "13px", whiteSpace: "nowrap" }}>
+                                <span style={{ color: "var(--app-muted-text-color)", marginRight: "4px" }}>레벨순</span>
+                                <select
+                                    className="map-search-select"
+                                    value={sortLevel}
+                                    onChange={(e) => { setSortLevel(e.target.value); setPage(0); }}
+                                >
+                                    <option value="default">기본</option>
+                                    <option value="asc">낮은순</option>
+                                    <option value="desc">높은순</option>
+                                </select>
+                            </label>
+                            <label style={{ fontSize: "13px", whiteSpace: "nowrap" }}>
+                                <span style={{ color: "var(--app-muted-text-color)", marginRight: "4px" }}>경험치 순</span>
+                                <select
+                                    className="map-search-select"
+                                    value={sortXp}
+                                    onChange={(e) => { setSortXp(e.target.value); setPage(0); }}
+                                >
+                                    <option value="default">기본</option>
+                                    <option value="asc">낮은순</option>
+                                    <option value="desc">높은순</option>
+                                </select>
+                            </label>
+                        </div>
+                    )}
                     {listLoading && <div className="map-empty">로딩 중...</div>}
                     {listError && <div className="map-error">{listError}</div>}
                     {!listLoading && !listError && keyword !== "" && monsterResults.length === 0 && (
@@ -303,6 +356,7 @@ export default function MonsterList() {
                     )}
                     {!listLoading && !listError && monsterResults.length > 0 && (
                         <>
+                        <div className="map-list-and-pagination">
                         <div className="map-list">
                             {monsterResults.map((row, index) => {
                                 const display = getMonsterDisplay(row);
@@ -337,7 +391,7 @@ export default function MonsterList() {
                                 );
                             })}
                         </div>
-                        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "8px", marginTop: "12px", paddingTop: "8px", borderTop: "1px solid var(--app-border)" }}>
+                        <div className="map-pagination" style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "8px", paddingTop: "8px", borderTop: "1px solid var(--app-border)" }}>
                             {totalPages > 1 && (
                                 <>
                                     <button
@@ -373,6 +427,7 @@ export default function MonsterList() {
                                     ))}
                                 </select>
                             </label> */}
+                        </div>
                         </div>
                         </>
                     )}

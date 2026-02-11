@@ -89,7 +89,7 @@ export default function MapList() {
     const [mapListPage, setMapListPage] = useState(1);
     /** NPC 검색 목록 현재 페이지 (1-based) */
     const [npcListPage, setNpcListPage] = useState(1);
-    const LIST_PAGE_SIZE = 7;
+    const LIST_PAGE_SIZE = 10;
     /** 맵 목록 필터: 각각 전체 | 보이기 | 숨기기 */
     const [filterNpc, setFilterNpc] = useState("all");
     const [filterMonster, setFilterMonster] = useState("all");
@@ -1308,7 +1308,7 @@ export default function MapList() {
 
                         {/* 맵 목록일 때만: NPC / 몬스터 / 퀘스트 필터 select 3개 (공간 활용, 잘리지 않도록) */}
                         {searchType === "town" && maps.length > 0 && (
-                            <div className="map-list-filters" style={{ display: "flex", flexWrap: "wrap", gap: "8px 10px", marginBottom: "12px", alignItems: "center" }}>
+                            <div className="map-list-filters">
                                 <label style={{ fontSize: "13px", whiteSpace: "nowrap" }}>
                                     <span style={{ color: "var(--app-muted-text-color)", marginRight: "4px" }}>NPC</span>
                                     <select
@@ -1362,6 +1362,7 @@ export default function MapList() {
                         {/* 타운(맵) 검색 결과: map_name_kr(map_name_en) 형식, 몬스터/NPC 존재 여부에 따른 배경 음영 */}
                         {!listLoading && !listError && searchType === "town" && maps.length > 0 && (
                             <>
+                            <div className="map-list-and-pagination">
                             <div className="map-list">
                                 {/* 루프: 맵 목록 렌더 (필터 + 현재 페이지 구간) */}
                                 {mapListSlice.map((row, index) => {
@@ -1421,7 +1422,7 @@ export default function MapList() {
                             </div>
                             {/* 맵 목록 페이지네이션: 처음 / 이전 / 페이지 번호 / 다음 / 끝 */}
                             {totalMapPages > 1 && (
-                                <div className="map-pagination" style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "6px", marginTop: "4px", flexWrap: "wrap" }}>
+                                <div className="map-pagination" style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "6px", flexWrap: "wrap" }}>
                                     <button
                                         type="button"
                                         className="map-btn"
@@ -1459,6 +1460,7 @@ export default function MapList() {
                                     </button>
                                 </div>
                             )}
+                            </div>
                             {filteredMaps.length === 0 && (
                                 <div className="map-empty">해당 조건에 맞는 맵이 없습니다.</div>
                             )}
@@ -1468,6 +1470,7 @@ export default function MapList() {
                         {/* NPC 검색 결과 */}
                         {!listLoading && !listError && searchType === "npc" && npcResults.length > 0 && (
                             <>
+                            <div className="map-list-and-pagination">
                             <div className="map-list">
                                 {/* 루프: NPC 검색 결과 렌더 (현재 페이지 구간) */}
                                 {npcListSlice.map((row, index) => {
@@ -1493,7 +1496,7 @@ export default function MapList() {
                             </div>
                             {/* NPC 목록 페이지네이션: 처음 / 이전 / 페이지 번호 / 다음 / 끝 */}
                             {totalNpcPages > 1 && (
-                                <div className="map-pagination" style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "6px", marginTop: "4px", flexWrap: "wrap" }}>
+                                <div className="map-pagination" style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "6px", flexWrap: "wrap" }}>
                                     <button
                                         type="button"
                                         className="map-btn"
@@ -1531,6 +1534,7 @@ export default function MapList() {
                                     </button>
                                 </div>
                             )}
+                            </div>
                             </>
                         )}
                     </section>

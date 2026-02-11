@@ -165,7 +165,7 @@ body {
     /* 기본 배경/글씨 색상(페이지 전반) */
     background: var(--app-bg);
     color: var(--app-text-color);
-    /* 화면 전체 80% 크기로 축소 */
+    /* 브라우저 돋보기 100%여도 80%처럼 보이게 (잘리지 않고 꽉 차서 잘 보임) */
     zoom: 0.8;
     transform-origin: top left;
 }
@@ -347,27 +347,29 @@ html[data-theme="dark"] .theme-toggle-btn:hover {
     min-height: 0;
 }
 
-/* 맵 페이지일 때 content가 #root 기준 남은 높이를 채우도록 */
+/* 맵/퀘스트 목록 페이지: 사이드 메뉴 제외한 나머지 영역(폭·높이) 전부 사용 */
 .content:has(.map-page) {
     display: flex;
     flex-direction: column;
     flex: 1;
     min-height: 0;
-    min-width: 0; /* flex로 남은 공간만 차지, 사이드바를 덮지 않음 */
+    min-width: 0;
+    overflow: hidden;
+    padding-top: 10px;
+    padding-bottom: 24px;
 }
 
+/* 맵 목록 화면: 데스크톱은 브라우저 줌(Ctrl+스크롤)에만 반응. 모바일은 아래 미디어쿼리에서 별도 레이아웃(세로 스크롤·한 카드씩). */
 .map-page {
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    gap: 6px;
     width: 100%;
     max-width: 100%;
     flex: 1;
     min-height: 0;
     min-width: 0;
-    /* 그리드(리스트+페이지 버튼 포함)가 다 보이도록 페이지 높이 확보 */
-    min-height: 92vh;
-    overflow-x: visible;
+    overflow: hidden;
 }
 
 .map-header {
@@ -377,7 +379,7 @@ html[data-theme="dark"] .theme-toggle-btn:hover {
 }
 
 .map-header h2 {
-    margin: 0 0 6px 0;
+    margin: 0 0 2px 0;
     word-break: keep-all;
     overflow-wrap: normal;
 }
@@ -401,20 +403,19 @@ html[data-theme="dark"] .theme-toggle-btn:hover {
     display: grid;
     /* 3열: 좌측 맵 목록 | 가운데 상세 | 우측 몬스터/NPC 상세. minmax(0, …)로 화면 폭에 맞춰 축소 가능 */
     grid-template-columns: minmax(0, 420px) minmax(0, 0.5fr) minmax(0, 1.5fr);
-    grid-auto-rows: 1fr;
+    grid-template-rows: minmax(0, 1fr);
+    grid-auto-rows: minmax(0, 1fr);
     gap: 16px;
     align-items: stretch;
     min-width: 0;
     width: 100%;
     max-width: 100%;
-    flex: 1;
-    min-height: 0;
-    /* 리스트 + map-pagination 전부 그리드 안에 보이도록 높이 확대 */
-    min-height: 88vh;
+    flex: 1 1 0;
+    min-height: min(60vh, 100%); /* 줌 아웃/큰 화면에서 카드 목록 영역 최소 높이 확보 */
     overflow: hidden;
 }
 
-/* 몬스터 전용 페이지: 2열 (목록 | 상세). minmax(0, …)로 화면 폭에 맞춰 한 화면에 표시 */
+/* 몬스터/퀘스트 전용: 2열 (목록 | 상세), 사이드 제외한 남은 폭·높이 비율로 채움 */
 .monster-list-grid {
     grid-template-columns: minmax(0, 380px) minmax(0, 1fr);
 }
@@ -521,44 +522,79 @@ html[data-theme="dark"] .theme-toggle-btn:hover {
     min-width: 76px;
 }
 
-/* 좌측 카드: 그리드와 높이 맞춤 + 하단 여유(페이지 버튼·select 잘리지 않도록) */
+/* 좌측 카드: 그리드 셀 높이에 맞춤(브라우저 커져도 넘치지 않게), 리스트만 스크롤 */
 .map-grid .map-list-card {
-    min-height: 100%;
+    min-height: 0;
+    gap: 3px;
     display: flex;
     flex-direction: column;
     padding-bottom: 22px;
+    overflow: hidden;
 }
 .map-list-card .map-card-header,
 .map-list-card .map-search {
     flex-shrink: 0;
 }
-/* 리스트와 페이지네이션 사이 여백으로 페이지네이션을 카드 하단에 붙임 */
+/* 목록+페이지네이션을 한 덩어리로: 남는 공간은 이 블록이 통째로 차지, 둘 사이 간격은 고정 */
+.map-list-card .map-list-and-pagination {
+    flex: 1 1 0;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+}
+.map-list-card .map-list-and-pagination .map-list {
+    flex: 1 1 0;
+    min-height: 0;
+    overflow-y: auto;
+    overflow-x: hidden;
+}
+.map-list-card .map-list-and-pagination .map-pagination {
+    flex-shrink: 0;
+    margin-top: 6px;
+}
+/* 래퍼 없을 때(기존 구조) fallback */
+.map-list-card .map-list {
+    flex: 1 1 0;
+    min-height: 0;
+    overflow-y: auto;
+    overflow-x: hidden;
+}
 .map-list-card .map-pagination {
-    margin-top: auto;
+    flex-shrink: 0;
+    margin-top: 6px;
 }
 
-/* 필터 select 영역: 공간 활용 + 잘리지 않도록 */
+/* 필터 select 영역: 한 행에 1개씩 3행으로 표시 */
 .map-list-filters {
     padding-bottom: 10px;
+    margin-bottom: 12px;
     flex-shrink: 0;
     width: 100%;
     min-width: 0;
     overflow: visible;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
 }
 .map-list-filters label {
-    flex: 1 1 0;
-    min-width: 72px;
-    display: inline-flex;
+    display: flex;
     align-items: center;
-    gap: 4px;
+    gap: 8px;
+    min-width: 0;
+    width: 100%;
+}
+.map-list-filters label span {
+    flex-shrink: 0;
 }
 .map-list-filters .map-search-select {
-    flex: 1;
-    min-width: 0;
+    flex: 1 1 auto;
+    min-width: 100px;
     min-height: 32px;
     padding: 6px 8px;
     box-sizing: border-box;
     max-width: 100%;
+    width: auto;
 }
 
 /* 맵/NPC 목록: 7개 항목 높이 (그리드 안에 리스트+페이지 버튼 전부 들어가도록) */
@@ -840,7 +876,7 @@ html[data-theme="dark"] .map-table td {
     }
 }
 
-/* 태블릿·휴대폰: 1화면 = 맵 목록만 큰 화면, 스크롤 내리면 다음 화면(맵 상세 → 몬스터 상세)으로 스냅 */
+/* 모바일·태블릿: 데스크톱과 다르게 1열 세로 스크롤(한 카드씩 스냅). CSS zoom 없음, 터치/뷰포트에 맞춤 */
 @media (max-width: 980px) {
     .content:has(.map-page) {
         height: 100%;
@@ -939,6 +975,7 @@ html[data-theme="dark"] .map-table td {
 }
 
 /* 모바일: 패딩·터치·폰트 맞춤, 전체 레이아웃 스크롤 유지 */
+/* 모바일 소형: 맵 페이지 패딩·오버플로우만 조정(레이아웃은 980px에서 이미 1열) */
 @media (max-width: 640px) {
     .content {
         padding: 12px;
@@ -998,6 +1035,7 @@ html[data-theme="dark"] .map-table td {
 }
 
 /* 작은 모바일: body zoom 해제해 화면에 맞춤 */
+/* 모바일 초소형: body zoom 고정(일부 브라우저 자동 확대 방지), 카드 패딩 축소 */
 @media (max-width: 480px) {
     body {
         zoom: 1;
