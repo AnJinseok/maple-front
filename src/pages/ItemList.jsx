@@ -1,12 +1,17 @@
 import { useState, useEffect, useCallback } from "react";
 import { fetchChronostoryGachaponDrops, fetchChronostoryGachaponDropMachineNames, fetchItemDetailByCode, getItemImageUrl } from "../api/mapleApi";
 
+/** 행 순서 컬럼 키 (데이터 없이 표시만) */
+const ROW_ORDER_KEY = "_row";
+
 /** 컬럼 키 → 한글 라벨 (일부만 매핑, 없으면 키 그대로 표시) */
 const COLUMN_LABELS = {
+    [ROW_ORDER_KEY]: "순서",
     id: "ID",
     gacha_id: "가챠 ID",
     gachapon_id: "가챠 ID",
     machine_name: "기계명",
+    machine_name_kr: "기계명(한글)",
     item_id: "아이템 ID",
     item_name: "아이템명",
     item_name_kr: "아이템명(한글)",
@@ -15,6 +20,24 @@ const COLUMN_LABELS = {
     quantity: "수량",
     percent_text: "확률",
     drop_chance: "드롭확률"
+};
+
+/** 컬럼별 폭 (추가 열 넣을 수 있도록 핵심 컬럼만 좁게) */
+const COLUMN_WIDTHS = {
+    [ROW_ORDER_KEY]: "52px",
+    id: "52px",
+    gacha_id: "72px",
+    gachapon_id: "80px",
+    machine_name: "100px",
+    machine_name_kr: "110px",
+    item_id: "88px",
+    item_name: "140px",
+    item_name_kr: "140px",
+    name: "120px",
+    name_kr: "120px",
+    quantity: "56px",
+    percent_text: "72px",
+    drop_chance: "80px"
 };
 
 /**
@@ -28,15 +51,13 @@ function getCellValue(row, key) {
 }
 
 /**
- * 아이템 목록 페이지 - chronostory_gachapon_drop 테이블 조회, 테이블 형식 표시
+ * 가챠폰 목록 페이지 - chronostory_gachapon_drop 테이블 조회, 테이블 형식 표시
  * - 조회가 진짜 간단: 검색어(선택) + 페이징
  */
 export default function ItemList() {
-    const [itemId, setItemId] = useState("");
     const [itemName, setItemName] = useState("");
     const [itemNameKr, setItemNameKr] = useState("");
     const [machineName, setMachineName] = useState("");
-    const [submitItemId, setSubmitItemId] = useState("");
     const [submitItemName, setSubmitItemName] = useState("");
     const [submitItemNameKr, setSubmitItemNameKr] = useState("");
     const [submitMachineName, setSubmitMachineName] = useState("");
@@ -70,7 +91,6 @@ export default function ItemList() {
         setError(null);
         try {
             const res = await fetchChronostoryGachaponDrops({
-                itemId: submitItemId.trim() || undefined,
                 itemName: submitItemName.trim() || undefined,
                 itemNameKr: submitItemNameKr.trim() || undefined,
                 machineName: submitMachineName.trim() || undefined,
@@ -85,7 +105,7 @@ export default function ItemList() {
         } finally {
             setLoading(false);
         }
-    }, [submitItemId, submitItemName, submitItemNameKr, submitMachineName, page, size]);
+    }, [submitItemName, submitItemNameKr, submitMachineName, page, size]);
 
     useEffect(() => {
         load();
@@ -93,7 +113,6 @@ export default function ItemList() {
 
     const handleSearch = (e) => {
         e?.preventDefault();
-        setSubmitItemId(itemId);
         setSubmitItemName(itemName);
         setSubmitItemNameKr(itemNameKr);
         setSubmitMachineName(machineName);
@@ -129,12 +148,15 @@ export default function ItemList() {
     const items = data?.items ?? [];
     const totalElements = Number(data?.totalElements ?? 0);
     const totalPages = Number(data?.totalPages ?? 0);
-    const columns = items.length > 0 ? Object.keys(items[0]) : [];
+    const HIDDEN_COLUMNS = ["id", "item_id", "itemId"];
+    const columns = items.length > 0
+        ? Object.keys(items[0]).filter((col) => !HIDDEN_COLUMNS.includes(col))
+        : [];
 
     return (
         <div className="map-page">
             <div className="map-header">
-                <h2>아이템 목록</h2>
+                <h2>가챠폰 목록</h2>
                 <p className="map-subtitle">가챠폰(가챠 기계)별 드랍 아이템과 확률을 조회할 수 있습니다. 기계·등급 등을 선택한 뒤 조회하세요.</p>
             </div>
 
@@ -158,16 +180,6 @@ export default function ItemList() {
                                         <option key={name} value={name}>{name}</option>
                                     ))}
                                 </select>
-                            </label>
-                            <label style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "14px" }}>
-                                아이템 ID
-                                <input
-                                    type="text"
-                                    placeholder="아이템 ID"
-                                    value={itemId}
-                                    onChange={(e) => setItemId(e.target.value)}
-                                    style={{ padding: "6px 8px", borderRadius: "6px", border: "1px solid var(--app-border)", minWidth: "120px" }}
-                                />
                             </label>
                             <label style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "14px" }}>
                                 아이템명
@@ -250,11 +262,34 @@ export default function ItemList() {
                                 <div className="map-empty">데이터가 없습니다.</div>
                             ) : (
                                 <div style={{ overflowX: "auto" }}>
-                                    <table className="map-table" style={{ width: "100%", borderCollapse: "collapse" }}>
+                                    <table className="map-table" style={{ width: "100%", borderCollapse: "collapse", tableLayout: "fixed" }}>
                                         <thead>
                                             <tr>
+                                                <th
+                                                    style={{
+                                                        textAlign: "center",
+                                                        padding: "8px 10px",
+                                                        borderBottom: "2px solid var(--app-border)",
+                                                        whiteSpace: "nowrap",
+                                                        boxSizing: "border-box",
+                                                        width: COLUMN_WIDTHS[ROW_ORDER_KEY],
+                                                        maxWidth: COLUMN_WIDTHS[ROW_ORDER_KEY]
+                                                    }}
+                                                >
+                                                    {COLUMN_LABELS[ROW_ORDER_KEY]}
+                                                </th>
                                                 {columns.map((col) => (
-                                                    <th key={col} style={{ textAlign: "left", padding: "8px 10px", borderBottom: "2px solid var(--app-border)", whiteSpace: "nowrap" }}>
+                                                    <th
+                                                        key={col}
+                                                        style={{
+                                                            textAlign: "left",
+                                                            padding: "8px 10px",
+                                                            borderBottom: "2px solid var(--app-border)",
+                                                            whiteSpace: "nowrap",
+                                                            boxSizing: "border-box",
+                                                            ...(COLUMN_WIDTHS[col] ? { width: COLUMN_WIDTHS[col], maxWidth: COLUMN_WIDTHS[col] } : {})
+                                                        }}
+                                                    >
                                                         {COLUMN_LABELS[col] ?? col}
                                                     </th>
                                                 ))}
@@ -263,17 +298,43 @@ export default function ItemList() {
                                         <tbody>
                                             {items.map((row, idx) => (
                                                 <tr key={row.id ?? idx}>
+                                                    <td
+                                                        style={{
+                                                            textAlign: "center",
+                                                            padding: "8px 10px",
+                                                            borderBottom: "1px solid var(--app-border)",
+                                                            verticalAlign: "middle",
+                                                            boxSizing: "border-box",
+                                                            width: COLUMN_WIDTHS[ROW_ORDER_KEY],
+                                                            maxWidth: COLUMN_WIDTHS[ROW_ORDER_KEY]
+                                                        }}
+                                                    >
+                                                        {page * size + idx + 1}
+                                                    </td>
                                                     {columns.map((col) => {
                                                         const val = getCellValue(row, col);
-                                                        const isItemId = /item_id|itemid/i.test(col);
-                                                        const imgUrl = isItemId && val != null ? getItemImageUrl(val) : null;
+                                                        const isItemNameOrKr = col === "item_name" || col === "item_name_kr";
+                                                        const itemId = getCellValue(row, "item_id");
+                                                        const imgUrl = isItemNameOrKr && itemId != null ? getItemImageUrl(itemId) : null;
+                                                        const cellWidth = COLUMN_WIDTHS[col];
                                                         return (
-                                                            <td key={col} style={{ padding: "8px 10px", borderBottom: "1px solid var(--app-border)", verticalAlign: "middle" }}>
+                                                            <td
+                                                                key={col}
+                                                                style={{
+                                                                    padding: "8px 10px",
+                                                                    borderBottom: "1px solid var(--app-border)",
+                                                                    verticalAlign: "middle",
+                                                                    boxSizing: "border-box",
+                                                                    ...(cellWidth
+                                                                        ? { width: cellWidth, maxWidth: cellWidth, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }
+                                                                        : {})
+                                                                }}
+                                                            >
                                                                 {imgUrl && (
                                                                     <img
                                                                         src={imgUrl}
                                                                         alt=""
-                                                                        style={{ width: 24, height: 24, marginRight: 6, verticalAlign: "middle", objectFit: "contain" }}
+                                                                        style={{ width: 24, height: 24, marginRight: 6, verticalAlign: "middle", objectFit: "contain", flexShrink: 0 }}
                                                                         onError={(e) => { e.target.style.display = "none"; }}
                                                                     />
                                                                 )}
@@ -288,29 +349,71 @@ export default function ItemList() {
                                 </div>
                             )}
 
-                            {totalPages > 1 && (
-                                <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "8px", marginTop: "16px", flexWrap: "wrap" }}>
-                                    <button
-                                        type="button"
-                                        className="map-btn"
-                                        disabled={page <= 0}
-                                        onClick={() => setPage((p) => Math.max(0, p - 1))}
-                                    >
-                                        이전
-                                    </button>
-                                    <span style={{ fontSize: "14px" }}>
-                                        {page + 1} / {totalPages} (총 {totalElements}건)
-                                    </span>
-                                    <button
-                                        type="button"
-                                        className="map-btn"
-                                        disabled={page >= totalPages - 1}
-                                        onClick={() => setPage((p) => Math.min(totalPages - 1, p + 1))}
-                                    >
-                                        다음
-                                    </button>
-                                </div>
-                            )}
+                            {totalPages > 1 && (() => {
+                                const maxVisible = 9;
+                                let pageNumbers = [];
+                                if (totalPages <= maxVisible) {
+                                    pageNumbers = Array.from({ length: totalPages }, (_, i) => i);
+                                } else {
+                                    const half = Math.floor(maxVisible / 2);
+                                    let start = Math.max(0, page - half);
+                                    let end = Math.min(totalPages - 1, start + maxVisible - 1);
+                                    if (end - start + 1 < maxVisible) start = Math.max(0, end - maxVisible + 1);
+                                    pageNumbers = Array.from({ length: end - start + 1 }, (_, i) => start + i);
+                                }
+                                return (
+                                    <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "6px", marginTop: "16px", flexWrap: "wrap" }}>
+                                        <button
+                                            type="button"
+                                            className="map-btn"
+                                            disabled={page <= 0}
+                                            onClick={() => setPage(0)}
+                                            title="첫 페이지"
+                                        >
+                                            «
+                                        </button>
+                                        <button
+                                            type="button"
+                                            className="map-btn"
+                                            disabled={page <= 0}
+                                            onClick={() => setPage((p) => Math.max(0, p - 1))}
+                                        >
+                                            이전
+                                        </button>
+                                        {pageNumbers.map((p) => (
+                                            <button
+                                                key={p}
+                                                type="button"
+                                                className={`map-btn ${p === page ? "map-btn-primary" : ""}`}
+                                                onClick={() => setPage(p)}
+                                                style={{ minWidth: "36px" }}
+                                            >
+                                                {p + 1}
+                                            </button>
+                                        ))}
+                                        <button
+                                            type="button"
+                                            className="map-btn"
+                                            disabled={page >= totalPages - 1}
+                                            onClick={() => setPage((p) => Math.min(totalPages - 1, p + 1))}
+                                        >
+                                            다음
+                                        </button>
+                                        <button
+                                            type="button"
+                                            className="map-btn"
+                                            disabled={page >= totalPages - 1}
+                                            onClick={() => setPage(totalPages - 1)}
+                                            title="마지막 페이지"
+                                        >
+                                            »
+                                        </button>
+                                        <span style={{ fontSize: "13px", color: "var(--app-muted-text-color)", marginLeft: "8px" }}>
+                                            {page + 1} / {totalPages} (총 {totalElements.toLocaleString()}건)
+                                        </span>
+                                    </div>
+                                );
+                            })()}
                         </>
                     )}
                 </div>
