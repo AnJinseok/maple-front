@@ -1,18 +1,22 @@
-# Maple Front
+# Maple Front (1.web)
 
-이직 포트폴리오용 프론트엔드 프로젝트입니다. [Maple API](https://github.com/AnJinseok/maple-api)와 함께 사용하는 게임 데이터 조회 웹입니다.
+게임 데이터 조회 웹 UI. [Maple API](https://github.com/AnJinseok/maple-api)와 연동해 맵·몬스터·NPC·퀘스트·아이템·고확 등을 검색·상세 조회합니다.
 
-## About (프로젝트 개요)
+---
 
-- **데이터**: Python 스크래핑 → API(Spring Boot) → **이 저장소(React)** 로 이어지는 파이프라인의 마지막 단계입니다.
-- **역할**: 맵·몬스터·NPC·퀘스트·아이템·고확 등을 검색·상세 조회하는 UI 제공.
+## 개요
+
+| 구분 | 기술 |
+|------|------|
+| 프레임워크 | React 18, Vite 7 |
+| UI | MUI (Material UI), React Router |
+| 린트 | ESLint |
 
 ---
 
 ## 요구 사항
 
-- **Node.js** 18.x 이상 (20 LTS 권장)  
-  → [nodejs.org](https://nodejs.org) LTS 다운로드
+- **Node.js** 18.x 이상 (20 LTS 권장)
 
 ---
 
@@ -23,17 +27,7 @@ npm install
 npm run dev
 ```
 
-개발 서버: **http://localhost:5173**
-
----
-
-## 기술 스택
-
-- **React 18**
-- **Vite 7** — HMR, 빠른 개발 서버
-- **React Router**
-- **MUI (Material UI)** — UI 컴포넌트
-- **ESLint**
+- 개발 서버: **http://localhost:5173**
 
 ---
 
@@ -41,8 +35,8 @@ npm run dev
 
 | 명령어 | 설명 |
 |--------|------|
-| `npm run dev` | 개발 서버 실행 (HMR) |
-| `npm run build` | 프로덕션 빌드 |
+| `npm run dev` | 개발 서버 (HMR) |
+| `npm run build` | 프로덕션 빌드 → `dist/` |
 | `npm run preview` | 빌드 결과물 미리보기 |
 | `npm run lint` | ESLint 실행 |
 
@@ -50,26 +44,22 @@ npm run dev
 
 ## API 연동
 
-- **개발/빌드 공통**: `.env` 에 `VITE_API_BASE_URL=/api` 설정 (같은 서버 Nginx 사용 시)
-- Nginx 없이 API 직접 호출 시: `.env` 삭제 또는 주석 처리 → 기본값 `hostname:19080/api` 사용
+- **Nginx 리버스 프록시 사용 시**: `.env` 에 `VITE_API_BASE_URL=/api` (또는 프로덕션 API 주소)
+- **API 직접 호출**: `.env` 미설정 시 기본값 `http://{hostname}:19080/api` 사용
+
+정적 이미지(몬스터/NPC/맵 등)는 `VITE_STATIC_ORIGIN` 으로 기준 URL 지정 가능합니다.
 
 ---
 
-## 프로덕션 빌드 및 배포
+## 배포
 
-```bash
-npm run build
-```
-
-`dist/` 를 Nginx 등으로 서빙하세요. API 저장소의 **[DEPLOY.md](https://github.com/AnJinseok/maple-api/blob/main/DEPLOY.md)** 에 API + Front 함께 배포하는 순서가 정리되어 있습니다.
+1. `npm run build` 후 `dist/` 를 Nginx 등으로 서빙
+2. API·Front 함께 배포 순서는 API 저장소 **[DEPLOY.md](https://github.com/AnJinseok/maple-api/blob/main/DEPLOY.md)** 참고
+3. HTTPS(Let's Encrypt) 설정은 **`deploy/SSL-SETUP.md`** 참고
 
 ---
 
-## 로그 (서버에서 개발 서버 실행 시)
+## 기타
 
-```bash
-chmod +x scripts/run-dev-with-log.sh
-./scripts/run-dev-with-log.sh
-```
-
-출력이 `logs/front.log` 에 저장됩니다.
+- **개발 서버 로그** (서버에서 실행 시): `./scripts/run-dev-with-log.sh` → `logs/front.log`
+- **파비콘**: `public/favicon.png` (프로젝트에서 관리)
