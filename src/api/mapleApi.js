@@ -13,13 +13,22 @@ export const API_ORIGIN =
         : (typeof window !== "undefined" ? window.location.origin : "");
 
 /**
+ * 이미지(items, npcs, minimaps, monsters, monster-moves) 요청용 오리진.
+ * 로컬 PC에서는 nginx가 없으므로 VITE_STATIC_ORIGIN으로 서버 주소 지정 시 해당 서버에서 이미지 로드.
+ */
+const STATIC_ORIGIN =
+    typeof import.meta.env?.VITE_STATIC_ORIGIN === "string" && import.meta.env.VITE_STATIC_ORIGIN.trim() !== ""
+        ? import.meta.env.VITE_STATIC_ORIGIN.replace(/\/$/, "")
+        : API_ORIGIN;
+
+/**
  * 몬스터 이미지(GIF) URL 반환 (resources/static/monster-moves/{mob_id}.gif)
  * - 입력: mobId(string|number)
  * - 출력: string URL, 없으면 null
  */
 export function getMonsterImageUrl(mobId) {
     if (mobId == null || mobId === "") return null;
-    return `${API_ORIGIN}/monster-moves/${encodeURIComponent(String(mobId))}.gif`;
+    return `${STATIC_ORIGIN}/monster-moves/${encodeURIComponent(String(mobId))}.gif`;
 }
 
 /**
@@ -29,7 +38,7 @@ export function getMonsterImageUrl(mobId) {
  */
 export function getMapImageUrl(mapId) {
     if (mapId == null || mapId === "") return null;
-    return `${API_ORIGIN}/minimaps/${encodeURIComponent(String(mapId))}.png`;
+    return `${STATIC_ORIGIN}/minimaps/${encodeURIComponent(String(mapId))}.png`;
 }
 
 /**
@@ -40,7 +49,20 @@ export function getMapImageUrl(mapId) {
 export function getNpcImageUrl(npcId) {
     // 조건문: npcId가 비어있으면 이미지 URL을 만들지 않음
     if (npcId == null || npcId === "") return null;
-    return `${API_ORIGIN}/npcs/${encodeURIComponent(String(npcId))}.png`;
+    return `${STATIC_ORIGIN}/npcs/${encodeURIComponent(String(npcId))}.png`;
+}
+
+/**
+ * NPC 이미지 URL 반환 (npc_file_path 경로 사용, 상대/절대 경로 모두 처리)
+ * - 입력: npcFilePath(string, 예: "npcs/123.png" 또는 "/npcs/123.png")
+ * - 출력: string URL, 없으면 null
+ */
+export function getNpcImageUrlByFilePath(npcFilePath) {
+    if (npcFilePath == null || String(npcFilePath).trim() === "") return null;
+    const path = String(npcFilePath).trim();
+    if (path.startsWith("http://") || path.startsWith("https://")) return path;
+    const normalized = path.startsWith("/") ? path : `/${path}`;
+    return `${STATIC_ORIGIN}${normalized}`;
 }
 
 /**
@@ -50,7 +72,7 @@ export function getNpcImageUrl(npcId) {
  */
 export function getItemImageUrl(itemId) {
     if (itemId == null || itemId === "") return null;
-    return `${API_ORIGIN}/items/${encodeURIComponent(String(itemId))}.png`;
+    return `${STATIC_ORIGIN}/items/${encodeURIComponent(String(itemId))}.png`;
 }
 
 /**
@@ -233,7 +255,10 @@ export async function fetchChronostoryNpcDetail(npcId, mapId) {
         throw new Error("npcId가 없습니다.");
     }
 
-    const url = new URL(`${API_BASE_URL}/chronostory/maps/npcs/${encodeURIComponent(safeNpcId)}`);
+    const path = `${API_BASE_URL.replace(/\/?$/, "")}/chronostory/maps/npcs/${encodeURIComponent(safeNpcId)}`;
+    const url = API_BASE_URL.startsWith("http")
+        ? new URL(path)
+        : new URL(path.startsWith("/") ? path : `/${path}`, typeof window !== "undefined" ? window.location.origin : "http://localhost");
     if (mapId != null && String(mapId).trim() !== "") {
         url.searchParams.set("mapId", String(mapId).trim());
     }
