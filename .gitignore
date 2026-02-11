@@ -27,5 +27,6 @@ dist-ssr
 UsersuserAppDataRoamingnpm-cache
 **/UsersuserAppDataRoamingnpm-cache/
 
-# 배치/alias 스크립트 (서버에만 둠, 깃에 올리지 않음)
+# 배치/alias 스크립트, 배포 설정 (서버에만 둠, 깃에 올리지 않음)
 batch-runner/
+deploy/
