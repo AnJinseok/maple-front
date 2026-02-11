@@ -328,21 +328,56 @@ export default function MapList() {
 
     /**
      * NPC 검색 결과 클릭 핸들러
+     * - 맵 상세 로드 + 선택한 NPC 상세를 우측에 표시
      * - 입력: npcRow(object)
      * - 출력: 없음(상태 업데이트)
      */
     function handleSelectNpcRow(npcRow) {
         const nextKey = getMapKeyFromSearchRow(npcRow);
-        // 조건문: 맵 key가 없으면 선택 불가
         if (!nextKey) return;
-        // 조건문: 다른 맵(검색 결과)을 선택하면 몬스터 상세 선택은 원상태로 초기화
+
+        const npcKey = getNpcRowKey(npcRow, 0);
+        const npcId = npcRow.npc_id ?? npcRow.npcId ?? npcRow.id ?? null;
+
         setSelectedMonsterKey(null);
         setSelectedMonsterRow(null);
-        setSelectedNpcKey(null);
-        setSelectedNpcRow(null);
         setMobDetail(null);
-        setNpcDetail(null);
         setSelectedMapKey(nextKey);
+        setSelectedNpcKey(npcKey);
+        setSelectedNpcRow(npcRow);
+
+        if (npcId) {
+            setNpcDetailLoading(true);
+            setNpcDetailError(null);
+            setNpcDetail(null);
+            if (isChronoStoryWorld) {
+                fetchChronostoryNpcDetail(npcId, nextKey)
+                    .then((res) => {
+                        const payload = res?.data ?? res;
+                        setNpcDetail(payload);
+                    })
+                    .catch((err) => {
+                        setNpcDetailError(err?.message || "NPC 상세 정보 조회 중 오류가 발생했습니다.");
+                        setNpcDetail(null);
+                    })
+                    .finally(() => setNpcDetailLoading(false));
+            } else if (isMapleLandWorld) {
+                fetchMaplelandNpcDetail(npcId)
+                    .then((res) => {
+                        const payload = res?.data ?? res;
+                        setNpcDetail(payload);
+                    })
+                    .catch((err) => {
+                        setNpcDetailError(err?.message || "NPC 상세 정보 조회 중 오류가 발생했습니다.");
+                        setNpcDetail(null);
+                    })
+                    .finally(() => setNpcDetailLoading(false));
+            } else {
+                setNpcDetailLoading(false);
+            }
+        } else {
+            setNpcDetail(null);
+        }
     }
 
     // 맵 목록 조회
