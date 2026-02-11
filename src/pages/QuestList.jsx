@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useWorld } from "../contexts/WorldContext";
 import { fetchChronostoryQuests, getNpcImageUrl, getNpcImageUrlByFilePath } from "../api/mapleApi";
 
@@ -38,10 +38,10 @@ function parseCSV(text) {
 
 /** API items 또는 CSV rows → 공통 객체 배열 (목록/상세용) */
 function toQuestItems(source, apiItems, csvHeaders, csvRows) {
-    if (source === "api" && apiItems && apiItems.length > 0) {
+    if (source === "api" && Array.isArray(apiItems)) {
         return apiItems;
     }
-    if (source === "csv" && csvHeaders && csvHeaders.length > 0 && csvRows) {
+    if (source === "csv" && Array.isArray(csvHeaders) && csvHeaders.length > 0 && Array.isArray(csvRows)) {
         return csvRows.map((row) => {
             const obj = {};
             csvHeaders.forEach((h, i) => { obj[h] = row[i] ?? ""; });
@@ -114,36 +114,15 @@ export default function QuestList() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [search, setSearch] = useState("");
+    const [submitSearch, setSubmitSearch] = useState("");
+    const [page, setPage] = useState(0);
+    const [size, setSize] = useState(7);
+    const [totalElements, setTotalElements] = useState(0);
+    const [totalPages, setTotalPages] = useState(0);
     const [selectedQuest, setSelectedQuest] = useState(null);
 
-    const loadFromApi = () => {
-        setLoading(true);
-        setError(null);
-        fetchChronostoryQuests({ page: 0, size: 10000 })
-            .then((res) => {
-                const data = res?.data ?? res;
-                const items = data?.items ?? [];
-                if (items.length > 0) {
-                    setApiItems(items);
-                    setSource("api");
-                    setCsvText(null);
-                    setCsvData({ headers: [], rows: [] });
-                    setLoading(false);
-                } else {
-                    setApiItems(null);
-                    setSource(null);
-                    loadStaticCsv();
-                }
-            })
-            .catch(() => {
-                setApiItems(null);
-                setSource(null);
-                loadStaticCsv();
-            })
-            .finally(() => setLoading(false));
-    };
-
-    const loadStaticCsv = () => {
+    /** CSV 폴백 로드 (API 실패 또는 데이터 없을 때만 사용, loadFromApi보다 먼저 정의) */
+    const loadStaticCsv = useCallback(() => {
         setLoading(true);
         setError(null);
         fetch(CSV_PATH)
@@ -163,31 +142,52 @@ export default function QuestList() {
                 setSource(null);
             })
             .finally(() => setLoading(false));
-    };
+    }, []);
+
+    const loadFromApi = useCallback((pageNum = 0, pageSize = size) => {
+        setLoading(true);
+        setError(null);
+        const keyword = submitSearch.trim() || undefined;
+        fetchChronostoryQuests({ page: pageNum, size: pageSize, keyword })
+            .then((res) => {
+                const data = res?.data ?? res;
+                const items = data?.items ?? [];
+                const total = Number(data?.totalElements ?? 0);
+                const pages = Number(data?.totalPages ?? 0);
+                setApiItems(items);
+                setTotalElements(total);
+                setTotalPages(pages);
+                if (items.length > 0 || total > 0) {
+                    setSource("api");
+                    setCsvText(null);
+                    setCsvData({ headers: [], rows: [] });
+                } else {
+                    setApiItems(null);
+                    setSource(null);
+                    loadStaticCsv();
+                }
+                setLoading(false);
+            })
+            .catch(() => {
+                setApiItems(null);
+                setSource(null);
+                loadStaticCsv();
+            })
+            .finally(() => setLoading(false));
+    }, [submitSearch, size, loadStaticCsv]);
 
     useEffect(() => {
         if (isChronoStoryWorld) {
-            loadFromApi();
+            loadFromApi(page, size);
         } else {
             setLoading(false);
             setSelectedQuest(null);
         }
-    }, [isChronoStoryWorld]);
+    }, [isChronoStoryWorld, page, submitSearch, size, loadFromApi]);
 
     const questItems = useMemo(() => {
         return toQuestItems(source, apiItems, csvData.headers, csvData.rows);
     }, [source, apiItems, csvData.headers, csvData.rows]);
-
-    const filteredItems = useMemo(() => {
-        if (!search.trim()) return questItems;
-        const lower = search.trim().toLowerCase();
-        return questItems.filter((item) => {
-            const name = getQuestDisplayNameText(item);
-            const meta = getQuestMeta(item);
-            const all = JSON.stringify(item || {}).toLowerCase();
-            return name.toLowerCase().includes(lower) || meta.toLowerCase().includes(lower) || all.includes(lower);
-        });
-    }, [questItems, search]);
 
     /** 상세에 표시할 라벨 매핑 (snake_case → 한글) */
     const detailLabelMap = useMemo(() => ({
@@ -306,9 +306,13 @@ export default function QuestList() {
                 <section className="map-card map-list-card">
                     <div className="map-card-header">
                         <h3>퀘스트 목록</h3>
-                        {filteredItems.length > 0 && <span className="map-badge">{filteredItems.length}개</span>}
+                        {totalElements > 0 && <span className="map-badge">{totalElements.toLocaleString()}개</span>}
                     </div>
-                    <div className="map-search" style={{ border: "1px solid var(--app-border)", borderRadius: "10px", padding: "0" }}>
+                    <form
+                        className="map-search"
+                        style={{ border: "1px solid var(--app-border)", borderRadius: "10px", padding: "0" }}
+                        onSubmit={(e) => { e.preventDefault(); setSubmitSearch(search); setPage(0); }}
+                    >
                         <input
                             className="map-search-input"
                             type="text"
@@ -317,7 +321,8 @@ export default function QuestList() {
                             onChange={(e) => setSearch(e.target.value)}
                             style={{ border: "none", flex: 1, padding: "10px 12px" }}
                         />
-                    </div>
+                        <button type="submit" className="btn btn-primary" style={{ margin: 0 }}>검색</button>
+                    </form>
                     {!isChronoStoryWorld && (
                         <div className="map-empty">크로노스토리 월드에서만 퀘스트를 이용할 수 있습니다.</div>
                     )}
@@ -330,14 +335,15 @@ export default function QuestList() {
                             </div>
                         </div>
                     )}
-                    {isChronoStoryWorld && !loading && (source === "api" || source === "csv") && filteredItems.length === 0 && (
+                    {isChronoStoryWorld && !loading && (source === "api" || source === "csv") && questItems.length === 0 && (
                         <div className="map-empty">
-                            {search.trim() ? "검색 결과가 없습니다." : "퀘스트 데이터가 없습니다."}
+                            {submitSearch.trim() ? "검색 결과가 없습니다." : "퀘스트 데이터가 없습니다."}
                         </div>
                     )}
-                    {isChronoStoryWorld && !loading && (source === "api" || source === "csv") && filteredItems.length > 0 && (
+                    {isChronoStoryWorld && !loading && (source === "api" || source === "csv") && questItems.length > 0 && (
+                        <>
                         <div className="map-list">
-                            {filteredItems.map((item, index) => {
+                            {questItems.map((item, index) => {
                                 const key = getQuestKey(item, index);
                                 const isSelected = selectedQuest && getQuestKey(selectedQuest, -1) === key;
                                 return (
@@ -375,6 +381,44 @@ export default function QuestList() {
                                 );
                             })}
                         </div>
+                        {totalPages > 1 && (
+                            <div className="map-pagination" style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "8px", marginTop: "12px", paddingTop: "8px", borderTop: "1px solid var(--app-border)" }}>
+                                <button
+                                    type="button"
+                                    className="map-btn"
+                                    disabled={page <= 0 || loading}
+                                    onClick={() => setPage((p) => Math.max(0, p - 1))}
+                                >
+                                    이전
+                                </button>
+                                <span style={{ fontSize: "13px", color: "var(--app-muted-text-color)" }}>
+                                    {page + 1} / {totalPages} (총 {totalElements.toLocaleString()}건)
+                                </span>
+                                <button
+                                    type="button"
+                                    className="map-btn"
+                                    disabled={page >= totalPages - 1 || loading}
+                                    onClick={() => setPage((p) => Math.min(totalPages - 1, p + 1))}
+                                >
+                                    다음
+                                </button>
+                            </div>
+                        )}
+                        {/* {source === "api" && (
+                            <label style={{ display: "flex", alignItems: "center", gap: "8px", marginTop: "8px", fontSize: "13px", color: "var(--app-muted-text-color)" }}>
+                                페이지 크기
+                                <select
+                                    value={size}
+                                    onChange={(e) => { setSize(Number(e.target.value)); setPage(0); }}
+                                    style={{ padding: "6px 8px", borderRadius: "6px", border: "1px solid var(--app-border)" }}
+                                >
+                                    {[7, 20, 50, 100, 200].map((n) => (
+                                        <option key={n} value={n}>{n}</option>
+                                    ))}
+                                </select>
+                            </label>
+                        )} */}
+                        </>
                     )}
                 </section>
 
