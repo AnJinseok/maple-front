@@ -24,17 +24,6 @@ export default function SideMenu({ isOpen, onToggle }) {
                             홈
                         </NavLink>
                     </li>
-                    {/* 크로노스토리 선택 시에만 표시 */}
-                    {isChronoStory && (
-                        <li>
-                            <NavLink
-                                to="/items"
-                                className={({ isActive }) => (isActive ? "active" : "")}
-                            >
-                                가챠폰 목록
-                            </NavLink>
-                        </li>
-                    )}
 
                     {/* 숨김: 거래소, 길드, 고확 리스트, 아이템 능력치 장착 */}
                     {/* <li>
@@ -99,6 +88,16 @@ export default function SideMenu({ isOpen, onToggle }) {
                         </NavLink>
                     </li>
                     {/* 크로노스토리 선택 시에만 표시 */}
+                    {isChronoStory && (
+                        <li>
+                            <NavLink
+                                to="/items"
+                                className={({ isActive }) => (isActive ? "active" : "")}
+                            >
+                                가챠폰 목록
+                            </NavLink>
+                        </li>
+                    )}
                     {isChronoStory && (
                         <>
                             <li>

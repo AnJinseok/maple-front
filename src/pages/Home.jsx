@@ -1,14 +1,20 @@
 import { NavLink } from "react-router-dom";
+import { useWorld } from "../contexts/WorldContext";
 
 /**
- * 홈 화면 (사이드 메뉴와 동일한 템플릿: map-page + map-header + map-card)
+ * 홈 화면 — 크로노스토리 선택 시에만 바로가기 카드 표시, 메이플랜드일 때는 안내만
  */
 export default function Home() {
+    const { world } = useWorld();
+    const isChronoStory = world === "크로노스토리";
+    /* 사이드바 메뉴 순서와 동일 */
     const quickLinks = [
-        { to: "/items", label: "가챠폰 목록", desc: "가챠 기계별 드랍 아이템·확률 조회" },
         { to: "/maps", label: "맵", desc: "맵별 몬스터·NPC 정보" },
         { to: "/monsters", label: "몬스터", desc: "몬스터 정보 및 드롭" },
-        { to: "/quests", label: "퀘스트", desc: "퀘스트 목록 및 상세" }
+        { to: "/quests", label: "퀘스트", desc: "퀘스트 목록 및 상세" },
+        ...(isChronoStory ? [{ to: "/items", label: "가챠폰 목록", desc: "가챠 기계별 드랍 아이템·확률 조회" }] : []),
+        ...(isChronoStory ? [{ to: "/chronostory/magic-accuracy", label: "마법 명중률", desc: "크로노스토리 마법 명중률 계산" }] : []),
+        ...(isChronoStory ? [{ to: "/random-equipment-stats", label: "랜덤 장비 스탯", desc: "장비 랜덤 스탯 범위·시뮬레이션" }] : []),
     ];
 
     return (
