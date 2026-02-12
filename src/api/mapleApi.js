@@ -356,6 +356,31 @@ export async function fetchChronostoryMonsters(params = {}) {
 }
 
 /**
+ * 유저 능력치 저장 (공인 IP 기준, chronostory_user_stat)
+ * - 입력: body { intValue, str, dex, luk, bonusAcc, playerLevel, monsterAvoid, monsterLevel, monsterNameKr }
+ * - 출력: Promise(JSON) { data: { id, clientIp, createdAt } }
+ */
+export async function saveChronostoryUserStat(body) {
+    const response = await fetch(`${API_BASE_URL}/chronostory/user-stat`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body || {})
+    });
+    if (!response.ok) throw new Error("능력치 저장 실패");
+    return response.json();
+}
+
+/**
+ * 유저 능력치 최신 1건 조회 (요청 공인 IP 기준)
+ * - 출력: Promise(JSON) { data: { intValue, str, dex, luk, ... } }
+ */
+export async function getChronostoryUserStatLatest() {
+    const response = await fetch(`${API_BASE_URL}/chronostory/user-stat/latest`);
+    if (!response.ok) throw new Error("저장된 능력치 조회 실패");
+    return response.json();
+}
+
+/**
  * 크로노스토리 NPC 검색(한글명 기준)
  * - 입력: params(object) 예: { page, size, keyword }
  * - 출력: Promise(JSON)

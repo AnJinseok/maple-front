@@ -90,6 +90,14 @@ export default function SideMenu({ isOpen, onToggle }) {
                             퀘스트
                         </NavLink>
                     </li>
+                    <li>
+                        <NavLink
+                            to="/chronostory/magic-accuracy"
+                            className={({ isActive }) => (isActive ? "active" : "")}
+                        >
+                            마법 명중률
+                        </NavLink>
+                    </li>
                 </ul>
             </nav>
             {onToggle && (
