@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useLayoutEffect, useCallback, useRef } from "react";
 import { fetchChronostoryGachaponDrops, fetchChronostoryGachaponDropMachineNames, fetchChronostoryGachaponDropSubTypes, fetchItemDetailByCode, getItemImageUrl } from "../api/mapleApi";
 
 /** 행 순서 컬럼 키 (데이터 없이 표시만) */
@@ -78,6 +78,32 @@ export default function ItemList() {
     const [lookupResult, setLookupResult] = useState(null);
     const [lookupLoading, setLookupLoading] = useState(false);
     const [lookupError, setLookupError] = useState(null);
+
+    /** 가챠 목록 루트 DOM - content 크기에 맞춘 동적 줌 계산용 */
+    const pageRef = useRef(null);
+
+    /** main-container(사이드바 열림 시 sidebar-open) 높이에 맞춰 줌 계산 (테이블+페이징까지 한 화면에 보이도록) */
+    useLayoutEffect(() => {
+        const el = pageRef.current;
+        const container = document.querySelector(".main-container.sidebar-open") || document.querySelector(".main-container");
+        if (!el || !container) return;
+
+        const applyZoom = () => {
+            const availableHeight = container.clientHeight;
+            const currentZoom = parseFloat(getComputedStyle(el).zoom) || 1;
+            const contentHeight = el.scrollHeight;
+            const naturalHeight = contentHeight / currentZoom;
+            if (naturalHeight <= 0) return;
+            let zoom = availableHeight / naturalHeight;
+            zoom = Math.min(1, Math.max(0.8, zoom));
+            el.style.zoom = String(zoom);
+        };
+
+        applyZoom();
+        const resizeObserver = new ResizeObserver(applyZoom);
+        resizeObserver.observe(container);
+        return () => resizeObserver.disconnect();
+    }, [data, loading]);
 
     useEffect(() => {
         let cancelled = false;
@@ -177,7 +203,7 @@ export default function ItemList() {
         : [];
 
     return (
-        <div className="map-page">
+        <div ref={pageRef} className="map-page gacha-list-page">
             <div className="map-header">
                 <h2>가챠폰 목록</h2>
                 <p className="map-subtitle">가챠폰(가챠 기계)별 드랍 아이템과 확률을 조회할 수 있습니다. 기계·등급 등을 선택한 뒤 조회하세요.</p>
@@ -297,35 +323,15 @@ export default function ItemList() {
                             {items.length === 0 ? (
                                 <div className="map-empty">데이터가 없습니다.</div>
                             ) : (
-                                <div style={{ overflowX: "auto" }}>
-                                    <table className="map-table" style={{ width: "100%", borderCollapse: "collapse", tableLayout: "fixed" }}>
+                                <div className="gacha-list-table-wrap">
+                                    <table className="map-table gacha-list-table">
                                         <thead>
                                             <tr>
-                                                <th
-                                                    style={{
-                                                        textAlign: "center",
-                                                        padding: "8px 10px",
-                                                        borderBottom: "2px solid var(--app-border)",
-                                                        whiteSpace: "nowrap",
-                                                        boxSizing: "border-box",
-                                                        width: COLUMN_WIDTHS[ROW_ORDER_KEY],
-                                                        maxWidth: COLUMN_WIDTHS[ROW_ORDER_KEY]
-                                                    }}
-                                                >
+                                                <th data-label={COLUMN_LABELS[ROW_ORDER_KEY]}>
                                                     {COLUMN_LABELS[ROW_ORDER_KEY]}
                                                 </th>
                                                 {columns.map((col) => (
-                                                    <th
-                                                        key={col}
-                                                        style={{
-                                                            textAlign: "left",
-                                                            padding: "8px 10px",
-                                                            borderBottom: "2px solid var(--app-border)",
-                                                            whiteSpace: "nowrap",
-                                                            boxSizing: "border-box",
-                                                            ...(COLUMN_WIDTHS[col] ? { width: COLUMN_WIDTHS[col], maxWidth: COLUMN_WIDTHS[col] } : {})
-                                                        }}
-                                                    >
+                                                    <th key={col} data-label={COLUMN_LABELS[col] ?? col}>
                                                         {COLUMN_LABELS[col] ?? col}
                                                     </th>
                                                 ))}
@@ -334,17 +340,7 @@ export default function ItemList() {
                                         <tbody>
                                             {items.map((row, idx) => (
                                                 <tr key={row.id ?? idx}>
-                                                    <td
-                                                        style={{
-                                                            textAlign: "center",
-                                                            padding: "8px 10px",
-                                                            borderBottom: "1px solid var(--app-border)",
-                                                            verticalAlign: "middle",
-                                                            boxSizing: "border-box",
-                                                            width: COLUMN_WIDTHS[ROW_ORDER_KEY],
-                                                            maxWidth: COLUMN_WIDTHS[ROW_ORDER_KEY]
-                                                        }}
-                                                    >
+                                                    <td data-label={COLUMN_LABELS[ROW_ORDER_KEY]}>
                                                         {page * size + idx + 1}
                                                     </td>
                                                     {columns.map((col) => {
@@ -352,25 +348,14 @@ export default function ItemList() {
                                                         const isItemNameOrKr = col === "item_name" || col === "item_name_kr";
                                                         const itemId = getCellValue(row, "item_id");
                                                         const imgUrl = isItemNameOrKr && itemId != null ? getItemImageUrl(itemId) : null;
-                                                        const cellWidth = COLUMN_WIDTHS[col];
+                                                        const label = COLUMN_LABELS[col] ?? col;
                                                         return (
-                                                            <td
-                                                                key={col}
-                                                                style={{
-                                                                    padding: "8px 10px",
-                                                                    borderBottom: "1px solid var(--app-border)",
-                                                                    verticalAlign: "middle",
-                                                                    boxSizing: "border-box",
-                                                                    ...(cellWidth
-                                                                        ? { width: cellWidth, maxWidth: cellWidth, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }
-                                                                        : {})
-                                                                }}
-                                                            >
+                                                            <td key={col} data-label={label}>
                                                                 {imgUrl && (
                                                                     <img
                                                                         src={imgUrl}
                                                                         alt=""
-                                                                        style={{ width: 24, height: 24, marginRight: 6, verticalAlign: "middle", objectFit: "contain", flexShrink: 0 }}
+                                                                        className="gacha-list-item-icon"
                                                                         onError={(e) => { e.target.style.display = "none"; }}
                                                                     />
                                                                 )}

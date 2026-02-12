@@ -360,6 +360,7 @@ html[data-theme="dark"] .theme-toggle-btn:hover {
 }
 
 /* 맵 목록 화면: 데스크톱은 브라우저 줌(Ctrl+스크롤)에만 반응. 모바일은 아래 미디어쿼리에서 별도 레이아웃(세로 스크롤·한 카드씩). */
+/* map-page가 content 높이를 초과할 때 스크롤로 보이도록 overflow-y: auto */
 .map-page {
     display: flex;
     flex-direction: column;
@@ -369,7 +370,8 @@ html[data-theme="dark"] .theme-toggle-btn:hover {
     flex: 1;
     min-height: 0;
     min-width: 0;
-    overflow: hidden;
+    overflow-x: hidden;
+    overflow-y: auto;
 }
 
 .map-header {
@@ -744,6 +746,128 @@ html[data-theme="dark"] .map-table td {
 }
 
 /* =========================
+   가챠폰 목록 - 브라우저 크기에 맞춘 테이블/리스트 전환
+   - 줌아웃으로 테이블+페이징까지 한 화면에 표시(스크롤 최소화)
+   ========================= */
+/* 돋보기 줌아웃: 전체 콘텐츠를 축소해 테이블·페이징이 한 화면에 들어가도록 */
+.gacha-list-page {
+    zoom: 0.85;
+}
+@media (max-width: 1200px) {
+    .gacha-list-page {
+        zoom: 0.8;
+    }
+}
+@media (max-width: 900px) {
+    .gacha-list-page {
+        zoom: 0.9;
+    }
+}
+.gacha-list-page .map-card {
+    max-width: 100%;
+    width: 100%;
+    box-sizing: border-box;
+}
+.gacha-list-table-wrap {
+    overflow-x: auto;
+    max-width: 100%;
+    -webkit-overflow-scrolling: touch;
+}
+.gacha-list-table {
+    width: 100%;
+    min-width: 600px;
+    table-layout: fixed;
+    border-collapse: collapse;
+}
+.gacha-list-table th,
+.gacha-list-table td {
+    padding: 8px 10px;
+    border-bottom: 1px solid var(--app-border);
+    vertical-align: middle;
+    box-sizing: border-box;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.gacha-list-table th {
+    text-align: left;
+    white-space: nowrap;
+    background: var(--app-surface);
+    color: var(--app-muted-text-color);
+    font-weight: 600;
+    font-size: 13px;
+}
+.gacha-list-table th:first-child {
+    text-align: center;
+    width: 52px;
+    max-width: 52px;
+}
+.gacha-list-item-icon {
+    width: 24px;
+    height: 24px;
+    margin-right: 6px;
+    vertical-align: middle;
+    object-fit: contain;
+    flex-shrink: 0;
+}
+
+/* 작은 화면: 테이블 행을 카드형 리스트로 표시 */
+@media (max-width: 900px) {
+    .gacha-list-table-wrap {
+        overflow-x: visible;
+    }
+    .gacha-list-table,
+    .gacha-list-table thead,
+    .gacha-list-table tbody,
+    .gacha-list-table tr,
+    .gacha-list-table th,
+    .gacha-list-table td {
+        display: block;
+    }
+    .gacha-list-table thead tr {
+        position: absolute;
+        left: -9999px;
+        visibility: hidden;
+    }
+    .gacha-list-table tbody tr {
+        border: 1px solid var(--app-border);
+        border-radius: 10px;
+        margin-bottom: 12px;
+        padding: 12px;
+        background: var(--app-surface);
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+    }
+    .gacha-list-table tbody tr:last-child {
+        margin-bottom: 0;
+    }
+    .gacha-list-table td {
+        border-bottom: none;
+        padding: 6px 0;
+        overflow: visible;
+        text-overflow: unset;
+        white-space: normal;
+    }
+    .gacha-list-table td:not(:last-child) {
+        border-bottom: 1px solid var(--app-border);
+    }
+    .gacha-list-table td::before {
+        content: attr(data-label);
+        font-weight: 600;
+        font-size: 12px;
+        color: var(--app-muted-text-color);
+        display: inline-block;
+        min-width: 100px;
+        margin-right: 8px;
+        vertical-align: top;
+    }
+    .gacha-list-table td:first-child::before {
+        content: attr(data-label);
+    }
+    .gacha-list-item-icon {
+        margin-right: 8px;
+    }
+}
+
+/* =========================
    Maps - 몬스터 상세 패널(테이블 옆 박스)
    - 입력/출력: 없음(CSS)
    ========================= */
@@ -862,6 +986,117 @@ html[data-theme="dark"] .map-table td {
     gap: 8px;
     width: 100%;
     min-width: 0;
+}
+
+/* =========================================================
+   크로노스토리 마법 명중률 페이지
+========================================================= */
+.magic-accuracy-card .map-card-body {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+}
+.magic-accuracy-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+}
+@media (max-width: 640px) {
+    .magic-accuracy-grid {
+        grid-template-columns: 1fr;
+    }
+}
+.magic-accuracy-section h4,
+.magic-accuracy-result h4 {
+    margin: 0 0 12px;
+    font-size: 14px;
+    color: var(--app-subtle-text-color);
+}
+.magic-accuracy-inputs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px 20px;
+}
+.magic-accuracy-inputs label {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 120px;
+}
+.magic-accuracy-inputs label span {
+    font-size: 12px;
+    color: var(--app-muted-text-color);
+}
+.magic-accuracy-inputs input {
+    width: 100%;
+    max-width: 140px;
+    padding: 8px 10px;
+    border: 1px solid var(--app-border);
+    border-radius: 8px;
+    font-size: 14px;
+    background: var(--app-surface);
+    color: var(--app-text-color);
+}
+.magic-accuracy-monster-search-wrap {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+.magic-accuracy-selected-monster {
+    font-size: 12px;
+    color: var(--app-muted-text-color);
+}
+.magic-accuracy-save-wrap {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 1px solid var(--app-border);
+}
+.magic-accuracy-save-message {
+    font-size: 14px;
+    color: var(--app-muted-text-color);
+}
+.magic-accuracy-result {
+    padding-top: 16px;
+    border-top: 1px solid var(--app-border);
+}
+.magic-accuracy-stats {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    font-size: 14px;
+}
+.magic-accuracy-stats li {
+    padding: 4px 0;
+}
+.magic-accuracy-hitrate {
+    margin-top: 12px;
+    font-size: 16px;
+}
+.magic-accuracy-hitrate strong {
+    color: var(--app-text-color);
+}
+.magic-accuracy-formula-doc {
+    font-size: 14px;
+    line-height: 1.6;
+}
+.magic-accuracy-formula-doc p {
+    margin: 0 0 12px;
+}
+.magic-accuracy-formula-doc p:last-child {
+    margin-bottom: 0;
+}
+.magic-accuracy-formula-doc .muted {
+    display: block;
+    margin-top: 4px;
+    font-size: 12px;
+    color: var(--app-muted-text-color);
 }
 
 /* 몬스터 상세 그리드 열이 카드 폭을 넘지 않도록 */
@@ -2194,6 +2429,20 @@ html[data-theme="dark"] .modal-card textarea::placeholder {
     align-items: center;
     gap: 10px;
     padding: 12px 14px;
+    flex-wrap: wrap;
+}
+.monster-select-filter {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+.monster-select-filter-label {
+    font-size: 13px;
+    color: var(--app-muted-text-color);
+    white-space: nowrap;
+}
+.monster-select-sort {
+    min-width: 140px;
 }
 
 .modal-error {
@@ -2210,6 +2459,55 @@ html[data-theme="dark"] .modal-card textarea::placeholder {
 .modal-list {
     padding: 0 14px 14px 14px;
     overflow: auto;
+}
+
+/* 몬스터 검색 모달: 리스트 */
+.monster-select-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    max-height: 320px;
+    overflow-y: auto;
+}
+.monster-select-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    padding: 10px 14px;
+    border: 1px solid var(--app-border);
+    border-radius: 8px;
+    background: var(--app-surface);
+    color: var(--app-text-color);
+    font-size: 14px;
+    text-align: left;
+    cursor: pointer;
+}
+.monster-select-item:hover {
+    border-color: var(--app-subtle-text-color);
+    background: rgba(0, 0, 0, 0.03);
+}
+html[data-theme="dark"] .monster-select-item:hover {
+    background: rgba(255, 255, 255, 0.06);
+}
+.monster-select-item.selected {
+    border-color: rgba(59, 130, 246, 0.6);
+    background: rgba(59, 130, 246, 0.1);
+}
+.monster-select-name {
+    font-weight: 600;
+}
+.monster-select-meta {
+    font-size: 12px;
+    color: var(--app-muted-text-color);
+}
+.modal-pagination-info {
+    font-size: 13px;
+    color: var(--app-muted-text-color);
+    align-self: center;
 }
 
 .modal-grid {
