@@ -5,6 +5,7 @@ import ItemList from "./pages/ItemList";
 import ShoutList from "./pages/ShoutList";
 import EquipStats from "./pages/EquipStats";
 import ChronoStoryMagicAccuracy from "./pages/ChronoStoryMagicAccuracy";
+import RandomEquipmentStats from "./pages/RandomEquipmentStats";
 import MapList from "./pages/MapList";
 import MonsterList from "./pages/MonsterList";
 import QuestList from "./pages/QuestList";
@@ -30,6 +31,8 @@ export default function App() {
                             <Route path="/equip-stats" element={<EquipStats />} />
                             {/* 크로노스토리 전용: 마법 명중률 계산기 */}
                             <Route path="/chronostory/magic-accuracy" element={<ChronoStoryMagicAccuracy />} />
+                            {/* 랜덤 장비 스탯 시뮬레이션 공식 설명 */}
+                            <Route path="/random-equipment-stats" element={<RandomEquipmentStats />} />
                             {/* 월드 공통: 맵/NPC 정보 */}
                             <Route path="/maps" element={<MapList />} />
                             {/* 몬스터 전용 페이지 */}

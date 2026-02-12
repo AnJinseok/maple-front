@@ -361,6 +361,7 @@ export async function fetchChronostoryMonsters(params = {}) {
  * - 출력: Promise(JSON) { data: { id, clientIp, createdAt } }
  */
 export async function saveChronostoryUserStat(body) {
+    console.log(body);
     const response = await fetch(`${API_BASE_URL}/chronostory/user-stat`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },

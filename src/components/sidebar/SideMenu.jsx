@@ -1,11 +1,16 @@
 import { NavLink } from "react-router-dom";
+import { useWorld } from "../../contexts/WorldContext";
 
 /**
  * 좌측 사이드 메뉴(탭)
  * - 입력: isOpen(boolean), onToggle(function) — 열림 여부, 토글 콜백
  * - 출력: JSX(Element)
+ * - 크로노스토리 선택 시에만: 가챠폰 목록, 마법 명중률, 랜덤 장비 스탯 시뮬레이션 표시
  */
 export default function SideMenu({ isOpen, onToggle }) {
+    const { world } = useWorld();
+    const isChronoStory = world === "크로노스토리";
+
     return (
         <aside className="side-menu" aria-hidden={!isOpen}>
             <nav className="side-menu-nav">
@@ -19,14 +24,17 @@ export default function SideMenu({ isOpen, onToggle }) {
                             홈
                         </NavLink>
                     </li>
-                    <li>
-                        <NavLink
-                            to="/items"
-                            className={({ isActive }) => (isActive ? "active" : "")}
-                        >
-                            가챠폰 목록
-                        </NavLink>
-                    </li>
+                    {/* 크로노스토리 선택 시에만 표시 */}
+                    {isChronoStory && (
+                        <li>
+                            <NavLink
+                                to="/items"
+                                className={({ isActive }) => (isActive ? "active" : "")}
+                            >
+                                가챠폰 목록
+                            </NavLink>
+                        </li>
+                    )}
 
                     {/* 숨김: 거래소, 길드, 고확 리스트, 아이템 능력치 장착 */}
                     {/* <li>
@@ -90,14 +98,27 @@ export default function SideMenu({ isOpen, onToggle }) {
                             퀘스트
                         </NavLink>
                     </li>
-                    <li>
-                        <NavLink
-                            to="/chronostory/magic-accuracy"
-                            className={({ isActive }) => (isActive ? "active" : "")}
-                        >
-                            마법 명중률
-                        </NavLink>
-                    </li>
+                    {/* 크로노스토리 선택 시에만 표시 */}
+                    {isChronoStory && (
+                        <>
+                            <li>
+                                <NavLink
+                                    to="/chronostory/magic-accuracy"
+                                    className={({ isActive }) => (isActive ? "active" : "")}
+                                >
+                                    마법 명중률
+                                </NavLink>
+                            </li>
+                            <li>
+                                <NavLink
+                                    to="/random-equipment-stats"
+                                    className={({ isActive }) => (isActive ? "active" : "")}
+                                >
+                                    랜덤 장비 스탯 시뮬레이션
+                                </NavLink>
+                            </li>
+                        </>
+                    )}
                 </ul>
             </nav>
             {onToggle && (
