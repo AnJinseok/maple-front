@@ -116,10 +116,20 @@ export default function QuestList() {
     const [search, setSearch] = useState("");
     const [submitSearch, setSubmitSearch] = useState("");
     const [page, setPage] = useState(0);
-    const [size, setSize] = useState(10);
+    const [size, setSize] = useState(50);
     const [totalElements, setTotalElements] = useState(0);
     const [totalPages, setTotalPages] = useState(0);
     const [selectedQuest, setSelectedQuest] = useState(null);
+    const [sortBy, setSortBy] = useState(null);
+    const [sortOrder, setSortOrder] = useState("asc");
+    const [visibleColumns, setVisibleColumns] = useState({
+        quest_name_kr: true,
+        quest_name: true,
+        npc_name: true,
+        req_level: true,
+        reward_exp: true
+    });
+    const [showColumnMenu, setShowColumnMenu] = useState(false);
 
     /** CSV 폴백 로드 (API 실패 또는 데이터 없을 때만 사용, loadFromApi보다 먼저 정의) */
     const loadStaticCsv = useCallback(() => {
@@ -148,7 +158,12 @@ export default function QuestList() {
         setLoading(true);
         setError(null);
         const keyword = submitSearch.trim() || undefined;
-        fetchChronostoryQuests({ page: pageNum, size: pageSize, keyword })
+        const params = { page: pageNum, size: pageSize, keyword };
+        if (sortBy) {
+            params.sortBy = sortBy;
+            params.sortOrder = sortOrder;
+        }
+        fetchChronostoryQuests(params)
             .then((res) => {
                 const data = res?.data ?? res;
                 const items = data?.items ?? [];
@@ -174,7 +189,7 @@ export default function QuestList() {
                 loadStaticCsv();
             })
             .finally(() => setLoading(false));
-    }, [submitSearch, size, loadStaticCsv]);
+    }, [submitSearch, size, sortBy, sortOrder, loadStaticCsv]);
 
     useEffect(() => {
         if (isChronoStoryWorld) {
@@ -183,11 +198,20 @@ export default function QuestList() {
             setLoading(false);
             setSelectedQuest(null);
         }
-    }, [isChronoStoryWorld, page, submitSearch, size, loadFromApi]);
+    }, [isChronoStoryWorld, page, submitSearch, size, sortBy, sortOrder, loadFromApi]);
 
     const questItems = useMemo(() => {
         return toQuestItems(source, apiItems, csvData.headers, csvData.rows);
     }, [source, apiItems, csvData.headers, csvData.rows]);
+
+    /** 테이블 열 설정 (헤더·표시 메뉴 공용) */
+    const questTableColumns = useMemo(() => [
+        { key: "quest_name_kr", label: "퀘스트명(한글)", style: { minWidth: "120px" } },
+        { key: "quest_name", label: "퀘스트명(영문)", style: { minWidth: "140px" } },
+        { key: "npc_name", label: "NPC", style: { minWidth: "100px" } },
+        { key: "req_level", label: "요구레벨", style: { width: "70px", textAlign: "center" } },
+        { key: "reward_exp", label: "경험치", style: { width: "90px", textAlign: "right" } }
+    ], []);
 
     /** 상세에 표시할 라벨 매핑 (snake_case → 한글) */
     const detailLabelMap = useMemo(() => ({
@@ -308,21 +332,40 @@ export default function QuestList() {
                         <h3>퀘스트 목록</h3>
                         {totalElements > 0 && <span className="map-badge">{totalElements.toLocaleString()}개</span>}
                     </div>
-                    <form
-                        className="map-search"
-                        style={{ border: "1px solid var(--app-border)", borderRadius: "10px", padding: "0" }}
-                        onSubmit={(e) => { e.preventDefault(); setSubmitSearch(search); setPage(0); }}
-                    >
-                        <input
-                            className="map-search-input"
-                            type="text"
-                            placeholder="검색 (퀘스트명, 지역, NPC 등)"
-                            value={search}
-                            onChange={(e) => setSearch(e.target.value)}
-                            style={{ border: "none", flex: 1, padding: "10px 12px" }}
-                        />
-                        <button type="submit" className="btn btn-primary" style={{ margin: 0 }}>검색</button>
-                    </form>
+                    {isChronoStoryWorld && (
+                        <form
+                            onSubmit={(e) => { e.preventDefault(); setSubmitSearch(search); setPage(0); }}
+                            style={{ display: "flex", flexDirection: "column", gap: "12px", marginBottom: "12px" }}
+                        >
+                            <div style={{ display: "flex", gap: "12px", alignItems: "center", flexWrap: "wrap" }}>
+                                <label style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "14px" }}>
+                                    검색
+                                    <input
+                                        type="text"
+                                        placeholder="퀘스트명, 지역, NPC 등"
+                                        value={search}
+                                        onChange={(e) => setSearch(e.target.value)}
+                                        style={{ padding: "6px 8px", borderRadius: "6px", border: "1px solid var(--app-border)", minWidth: "160px" }}
+                                    />
+                                </label>
+                                <button type="submit" className="map-btn map-btn-primary">
+                                    조회
+                                </button>
+                                <label style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "14px" }}>
+                                    크기
+                                    <select
+                                        value={size}
+                                        onChange={(e) => { setSize(Number(e.target.value)); setPage(0); }}
+                                        style={{ padding: "6px 8px", borderRadius: "6px", border: "1px solid var(--app-border)" }}
+                                    >
+                                        {[20, 50, 100, 200].map((n) => (
+                                            <option key={n} value={n}>{n}</option>
+                                        ))}
+                                    </select>
+                                </label>
+                            </div>
+                        </form>
+                    )}
                     {!isChronoStoryWorld && (
                         <div className="map-empty">크로노스토리 월드에서만 퀘스트를 이용할 수 있습니다.</div>
                     )}
@@ -343,44 +386,143 @@ export default function QuestList() {
                     {isChronoStoryWorld && !loading && (source === "api" || source === "csv") && questItems.length > 0 && (
                         <>
                         <div className="map-list-and-pagination">
-                        <div className="map-list">
-                            {questItems.map((item, index) => {
-                                const key = getQuestKey(item, index);
-                                const isSelected = selectedQuest && getQuestKey(selectedQuest, -1) === key;
-                                return (
-                                    <button
-                                        key={key}
-                                        type="button"
-                                        className={`map-list-item ${isSelected ? "selected" : ""}`}
-                                        onClick={() => setSelectedQuest(item)}
-                                    >
-                                        <div className="map-list-name" style={{ width: "100%", textAlign: "left" }}>
-                                            <div style={{ fontWeight: 800, lineHeight: 1.3, marginBottom: "2px" }}>
-                                                {getQuestDisplayName(item)}
-                                            </div>
-                                            {(() => {
-                                                const npc = item.npc_name ?? item.npcName ?? "";
-                                                const level = item.req_level ?? item.reqLevel ?? "";
-                                                const exp = item.reward_exp ?? item.rewardExp ?? "";
-                                                const leftParts = [];
-                                                if (String(npc).trim()) leftParts.push(String(npc).trim());
-                                                if (String(level).trim()) leftParts.push(`Lv.${level}`);
-                                                const leftStr = leftParts.join(" · ");
-                                                const hasExp = exp !== "" && exp != null && exp !== undefined;
-                                                if (!leftStr && !hasExp) return null;
+                        <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", marginBottom: "6px", minHeight: "32px" }}>
+                            <div style={{ position: "relative" }}>
+                                <button
+                                    type="button"
+                                    className="map-btn"
+                                    onClick={() => setShowColumnMenu((v) => !v)}
+                                    style={{ padding: "4px 10px", fontSize: "13px" }}
+                                >
+                                    표시 {showColumnMenu ? "▲" : "▼"}
+                                </button>
+                                {showColumnMenu && (
+                                    <>
+                                        <div
+                                            role="presentation"
+                                            style={{ position: "fixed", inset: 0, zIndex: 10 }}
+                                            onClick={() => setShowColumnMenu(false)}
+                                        />
+                                        <div
+                                            style={{
+                                                position: "absolute",
+                                                top: "100%",
+                                                right: 0,
+                                                marginTop: "4px",
+                                                padding: "8px",
+                                                background: "var(--app-bg, #fff)",
+                                                border: "1px solid var(--app-border)",
+                                                borderRadius: "8px",
+                                                boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
+                                                zIndex: 11,
+                                                minWidth: "160px"
+                                            }}
+                                        >
+                                            <div style={{ fontSize: "12px", fontWeight: 600, marginBottom: "6px", color: "var(--app-muted-text-color)" }}>표시할 열</div>
+                                            {questTableColumns.map(({ key, label }) => {
+                                                const isChecked = !!visibleColumns[key];
+                                                const visibleCount = questTableColumns.filter((c) => visibleColumns[c.key]).length;
+                                                const canUncheck = visibleCount > 1 || !isChecked;
                                                 return (
-                                                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", flexWrap: "wrap", gap: "6px 12px", fontSize: "12px", color: "var(--app-muted-text-color)" }}>
-                                                        <span>{leftStr || "-"}</span>
-                                                        <span style={{ fontWeight: 600, color: "var(--app-text-color)" }}>
-                                                            {hasExp ? `XP ${Number(exp).toLocaleString()}` : "-"}
-                                                        </span>
-                                                    </div>
+                                                    <label key={key} style={{ display: "flex", alignItems: "center", gap: "8px", padding: "4px 0", cursor: canUncheck ? "pointer" : "default", fontSize: "14px" }}>
+                                                        <input
+                                                            type="checkbox"
+                                                            checked={isChecked}
+                                                            disabled={!canUncheck}
+                                                            onChange={() => canUncheck && setVisibleColumns((prev) => ({ ...prev, [key]: !prev[key] }))}
+                                                        />
+                                                        {label}
+                                                    </label>
                                                 );
-                                            })()}
+                                            })}
                                         </div>
-                                    </button>
-                                );
-                            })}
+                                    </>
+                                )}
+                            </div>
+                        </div>
+                        <div className="map-monster-table-wrap" style={{ overflowX: "auto" }}>
+                            <table className="map-table quest-list-table">
+                                <thead>
+                                    <tr>
+                                        {questTableColumns.filter((col) => visibleColumns[col.key]).map(({ key, label, style }) => {
+                                            const isActive = sortBy === key;
+                                            const handleSort = () => {
+                                                if (sortBy === key) {
+                                                    setSortOrder((o) => (o === "asc" ? "desc" : "asc"));
+                                                } else {
+                                                    setSortBy(key);
+                                                    setSortOrder("asc");
+                                                }
+                                                setPage(0);
+                                            };
+                                            return (
+                                                <th key={key} style={style}>
+                                                    <button
+                                                        type="button"
+                                                        onClick={handleSort}
+                                                        className="quest-sort-th"
+                                                        style={{
+                                                            background: "none",
+                                                            border: "none",
+                                                            padding: "4px 6px",
+                                                            cursor: "pointer",
+                                                            fontWeight: isActive ? 700 : undefined,
+                                                            display: "inline-flex",
+                                                            alignItems: "center",
+                                                            gap: "4px"
+                                                        }}
+                                                    >
+                                                        {label}
+                                                        {isActive && (sortOrder === "asc" ? " ▲" : " ▼")}
+                                                    </button>
+                                                </th>
+                                            );
+                                        })}
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {questItems.map((item, index) => {
+                                        const key = getQuestKey(item, index);
+                                        const isSelected = selectedQuest && getQuestKey(selectedQuest, -1) === key;
+                                        const cellByKey = {
+                                            quest_name_kr: String(item.quest_name_kr ?? item.questNameKr ?? "").trim() || "-",
+                                            quest_name: String(item.quest_name ?? item.questName ?? item.QuestName ?? item.QuestID ?? "").trim() || "-",
+                                            npc_name: String(item.npc_name ?? item.npcName ?? "").trim() || "-",
+                                            req_level: (item.req_level ?? item.reqLevel ?? "") !== "" && (item.req_level ?? item.reqLevel) != null ? (item.req_level ?? item.reqLevel) : "-",
+                                            reward_exp: (() => {
+                                                const exp = item.reward_exp ?? item.rewardExp ?? "";
+                                                return exp !== "" && exp != null && exp !== undefined ? Number(exp).toLocaleString() : "-";
+                                            })()
+                                        };
+                                        const tdStyleByKey = {
+                                            quest_name_kr: { fontWeight: 600 },
+                                            quest_name: { fontSize: "12px", color: "var(--app-muted-text-color)" },
+                                            npc_name: {},
+                                            req_level: { textAlign: "center" },
+                                            reward_exp: { textAlign: "right", fontWeight: 600 }
+                                        };
+                                        return (
+                                            <tr
+                                                key={key}
+                                                onClick={() => setSelectedQuest(item)}
+                                                role="button"
+                                                tabIndex={0}
+                                                onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setSelectedQuest(item); } }}
+                                                style={{
+                                                    cursor: "pointer",
+                                                    background: isSelected ? "var(--app-bg-secondary, rgba(0,0,0,0.06))" : undefined
+                                                }}
+                                            >
+                                                {questTableColumns.filter((col) => visibleColumns[col.key]).map((col) => (
+                                                    <td key={col.key} style={tdStyleByKey[col.key]}>
+                                                        {cellByKey[col.key]}
+                                                    </td>
+                                                ))}
+                                            </tr>
+                                        );
+                                    })}
+                                </tbody>
+                            </table>
                         </div>
                         {totalPages > 1 && (
                             <div className="map-pagination" style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "8px", paddingTop: "8px", borderTop: "1px solid var(--app-border)" }}>
@@ -405,20 +547,6 @@ export default function QuestList() {
                                 </button>
                             </div>
                         )}
-                        {/* {source === "api" && (
-                            <label style={{ display: "flex", alignItems: "center", gap: "8px", marginTop: "8px", fontSize: "13px", color: "var(--app-muted-text-color)" }}>
-                                페이지 크기
-                                <select
-                                    value={size}
-                                    onChange={(e) => { setSize(Number(e.target.value)); setPage(0); }}
-                                    style={{ padding: "6px 8px", borderRadius: "6px", border: "1px solid var(--app-border)" }}
-                                >
-                                    {[7, 20, 50, 100, 200].map((n) => (
-                                        <option key={n} value={n}>{n}</option>
-                                    ))}
-                                </select>
-                            </label>
-                        )} */}
                         </div>
                         </>
                     )}

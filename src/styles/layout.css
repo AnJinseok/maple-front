@@ -417,9 +417,11 @@ html[data-theme="dark"] .theme-toggle-btn:hover {
     overflow: hidden;
 }
 
-/* 몬스터/퀘스트 전용: 2열 (목록 | 상세), 사이드 제외한 남은 폭·높이 비율로 채움 */
+/* 몬스터/퀘스트 전용: 2열 (목록 | 상세), 리스트 영역 높이 확대 */
 .monster-list-grid {
-    grid-template-columns: minmax(0, 380px) minmax(0, 1fr);
+    /* 목록(좌) | 상세(우, 최대 420px로 폭 제한) */
+    grid-template-columns: minmax(0, 1fr) minmax(0, 420px);
+    min-height: min(78vh, 100%);
 }
 
 /* 그리드 내 카드: 높이 제한 + 내부 스크롤로 페이지 스크롤 방지 */
@@ -545,11 +547,12 @@ html[data-theme="dark"] .theme-toggle-btn:hover {
     flex-direction: column;
     gap: 0;
 }
-.map-list-card .map-list-and-pagination .map-list {
+.map-list-card .map-list-and-pagination .map-list,
+.map-list-card .map-list-and-pagination .map-monster-table-wrap {
     flex: 1 1 0;
     min-height: 0;
     overflow-y: auto;
-    overflow-x: hidden;
+    overflow-x: auto;
 }
 .map-list-card .map-list-and-pagination .map-pagination {
     flex-shrink: 0;
@@ -743,6 +746,10 @@ html[data-theme="dark"] .map-table td {
 
 .map-table tr:last-child td {
     border-bottom: 0;
+}
+
+.quest-list-table tbody tr:hover {
+    background: var(--app-bg-secondary, rgba(0, 0, 0, 0.04)) !important;
 }
 
 /* =========================
@@ -943,9 +950,9 @@ html[data-theme="dark"] .map-table td {
 
 /* 몬스터 목록이 너무 길어지는 문제 방지: 테이블을 내부 스크롤로 제한 */
 .map-monster-table-wrap {
-    max-height: 320px;
     overflow: auto;
     border-radius: 10px;
+    /* 목록 카드 안에서는 flex로 남은 높이 전부 사용 (.map-list-and-pagination 내부) */
 }
 
 /* 가운데 카드: 상세(맵 정보·몬스터·NPC) 영역만 스크롤 */
