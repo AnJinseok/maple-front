@@ -150,6 +150,7 @@ html[data-theme="dark"] .btn-page.active {
 html,
 body {
     height: 100%;
+    min-height: 100vh;
     margin: 0;
 }
 
@@ -359,6 +360,15 @@ html[data-theme="dark"] .theme-toggle-btn:hover {
     padding-bottom: 24px;
 }
 
+/* 퀘스트 목록: content 직계 자식 wrapper가 높이를 채우도록 (팝업 추가 시 화면 안 나오는 현상 방지) */
+.content .quest-list-wrapper {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-height: 0;
+    width: 100%;
+}
+
 /* 맵 목록 화면: 데스크톱은 브라우저 줌(Ctrl+스크롤)에만 반응. 모바일은 아래 미디어쿼리에서 별도 레이아웃(세로 스크롤·한 카드씩). */
 /* map-page가 content 높이를 초과할 때 스크롤로 보이도록 overflow-y: auto */
 .map-page {
@@ -422,6 +432,32 @@ html[data-theme="dark"] .theme-toggle-btn:hover {
     /* 목록(좌) | 상세(우, 최대 420px로 폭 제한) */
     grid-template-columns: minmax(0, 1fr) minmax(0, 420px);
     min-height: min(78vh, 100%);
+}
+
+/* 퀘스트 목록/상세 패널 비율 드래그 리사이즈 (quest-split-layout 시 gridTemplateColumns는 인라인으로 지정) */
+.quest-split-layout.monster-list-grid {
+    min-height: min(78vh, 100%);
+}
+.quest-panel-resize-handle {
+    cursor: col-resize;
+    background: var(--app-border, rgba(0, 0, 0, 0.12));
+    flex-shrink: 0;
+    min-height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.quest-panel-resize-handle:hover,
+.quest-panel-resize-handle:active {
+    background: var(--app-muted-text-color, #666);
+}
+.quest-panel-resize-handle::after {
+    content: "";
+    width: 2px;
+    height: 32px;
+    background: var(--app-surface, #fff);
+    border-radius: 1px;
+    opacity: 0.9;
 }
 
 /* 그리드 내 카드: 높이 제한 + 내부 스크롤로 페이지 스크롤 방지 */
@@ -1322,6 +1358,23 @@ html[data-theme="dark"] .map-table td {
 .map-btn:hover:not(:disabled) {
     background-color: rgba(148, 163, 184, 0.12);
     border-color: rgba(148, 163, 184, 0.4);
+}
+
+/* 팝업 닫기 버튼: 둥근 pill 스타일, × 아이콘과 함께 */
+.item-popup-close-btn {
+    padding: 8px 18px !important;
+    border-radius: 999px !important;
+    font-size: 14px !important;
+    background-color: var(--app-bg-secondary, #f1f5f9) !important;
+    border-color: var(--app-border) !important;
+    color: var(--app-text-color) !important;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+.item-popup-close-btn:hover {
+    background-color: rgba(148, 163, 184, 0.2) !important;
+    border-color: rgba(148, 163, 184, 0.5) !important;
 }
 
 .map-btn:active:not(:disabled) {

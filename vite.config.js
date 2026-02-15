@@ -12,6 +12,10 @@ export default defineConfig({
         allowedHosts: ["maple85.ddns.net"],
         proxy: {
             "/api": { target: "http://127.0.0.1:19080", changeOrigin: true }
+        },
+        // 개발 중 304 방지: 항상 최신 파일 받도록 (화면 안 나오는 현상 방지)
+        headers: {
+            "Cache-Control": "no-store, no-cache, must-revalidate"
         }
     }
 });

@@ -11,7 +11,7 @@ export const API_ORIGIN =
     API_BASE_URL.startsWith("http")
         ? API_BASE_URL.replace(/\/api\/?$/, "") || "http://localhost:19080"
         : (typeof window !== "undefined" ? window.location.origin : "");
-
+ 
 /**
  * 이미지(items, npcs, minimaps, monsters, monster-moves) 요청용 오리진.
  * - API /api/config 에서 같은 망일 때 staticOrigin 을 내려주면 그걸 우선 사용 → 같은 망에서도 이미지 로드.
@@ -330,6 +330,32 @@ export async function fetchChronostoryQuests(params = {}) {
 }
 
 /**
+ * 크로노스토리 아이템 드랍 위치 조회 (해당 아이템을 드랍하는 몹 목록)
+ * - 입력: itemId(string)
+ * - 출력: Promise(JSON) { data: { drops: [{ mob_id, mob_name_kr, mob_name_en }, ...] } }
+ */
+export async function fetchChronostoryItemDrops(itemId) {
+    const safe = String(itemId ?? "").trim();
+    if (!safe) return { data: { drops: [] } };
+    const response = await fetch(`${API_BASE_URL}/chronostory/items/${encodeURIComponent(safe)}/drops`, { cache: "no-store" });
+    if (!response.ok) return { data: { drops: [] } };
+    return response.json();
+}
+
+/**
+ * 아이템 상세 조회 (기본 정보 + 드랍 몬스터 + 몬스터별 출현 맵)
+ * @param itemId 아이템 ID
+ * @returns Promise<{ data: { item, drops: [{ mob_id, mob_name_kr, mob_name_en, is_boss, maps }] } }>
+ */
+export async function fetchChronostoryItemDetail(itemId) {
+    const safe = String(itemId ?? "").trim();
+    if (!safe) return { data: { item: {}, drops: [] } };
+    const response = await fetch(`${API_BASE_URL}/chronostory/items/${encodeURIComponent(safe)}/detail`, { cache: "no-store" });
+    if (!response.ok) return { data: { item: { item_id: safe }, drops: [] } };
+    return response.json();
+}
+
+/**
  * 크로노스토리 퀘스트 DB CSV 임포트
  * - 입력: file(File), clearFirst(boolean) true면 기존 데이터 삭제 후 삽입
  * - 출력: Promise(JSON) { data: { importedCount, cleared, message } }
@@ -616,26 +642,6 @@ export async function fetchMaplelandMobMoves(params = {}) {
         throw new Error("메이플랜드 mob_move 조회 실패");
     }
 
-    return response.json();
-}
-
-/**
- * 크로노스토리 아이템 상세 정보 조회
- * - 입력: itemId(string|number)
- * - 출력: Promise(JSON)
- */
-export async function fetchChronostoryItemDetail(itemId) {
-    const safeItemId = String(itemId ?? "").trim();
-
-    // 조건문: itemId가 없으면 호출 불가
-    if (!safeItemId) {
-        throw new Error("itemId가 없습니다.");
-    }
-
-    const response = await fetch(`${API_BASE_URL}/chronostory/maps/items/${encodeURIComponent(safeItemId)}`);
-    if (!response.ok) {
-        throw new Error("크로노스토리 아이템 상세 조회 실패");
-    }
     return response.json();
 }
 

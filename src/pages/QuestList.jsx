@@ -1,6 +1,6 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useWorld } from "../contexts/WorldContext";
-import { fetchChronostoryQuests, getNpcImageUrl, getNpcImageUrlByFilePath } from "../api/mapleApi";
+import { fetchChronostoryItemDetail, fetchChronostoryItemDrops, fetchChronostoryNpcDetail, fetchChronostoryQuests, getItemImageUrl, getMonsterImageUrl, getNpcImageUrl, getNpcImageUrlByFilePath } from "../api/mapleApi";
 
 const CSV_PATH = "/data/QuestDatabase.csv";
 
@@ -130,6 +130,14 @@ export default function QuestList() {
         reward_exp: true
     });
     const [showColumnMenu, setShowColumnMenu] = useState(false);
+    const [listPanelPercent, setListPanelPercent] = useState(50);
+    const [resizingSplitter, setResizingSplitter] = useState(false);
+    const splitterStartRef = useRef({ clientX: 0, percent: 50 });
+    const splitContainerRef = useRef(null);
+    const [npcLocationMaps, setNpcLocationMaps] = useState([]);
+    const [itemDropsCache, setItemDropsCache] = useState({});
+    const [itemPopup, setItemPopup] = useState(null);
+    const [itemDetail, setItemDetail] = useState(null);
 
     /** CSV 폴백 로드 (API 실패 또는 데이터 없을 때만 사용, loadFromApi보다 먼저 정의) */
     const loadStaticCsv = useCallback(() => {
@@ -199,6 +207,119 @@ export default function QuestList() {
             setSelectedQuest(null);
         }
     }, [isChronoStoryWorld, page, submitSearch, size, sortBy, sortOrder, loadFromApi]);
+
+    /** 목록/상세 패널 비율 드래그 리사이즈 */
+    useEffect(() => {
+        if (!resizingSplitter) return;
+        const onMove = (e) => {
+            const el = splitContainerRef.current;
+            if (!el) return;
+            const { clientX, percent } = splitterStartRef.current;
+            const containerWidth = el.offsetWidth;
+            if (containerWidth <= 0) return;
+            const deltaPercent = ((e.clientX - clientX) / containerWidth) * 100;
+            setListPanelPercent((p) => Math.min(80, Math.max(20, percent + deltaPercent)));
+        };
+        const onUp = () => setResizingSplitter(false);
+        document.body.style.cursor = "col-resize";
+        document.body.style.userSelect = "none";
+        window.addEventListener("mousemove", onMove);
+        window.addEventListener("mouseup", onUp);
+        return () => {
+            document.body.style.cursor = "";
+            document.body.style.userSelect = "";
+            window.removeEventListener("mousemove", onMove);
+            window.removeEventListener("mouseup", onUp);
+        };
+    }, [resizingSplitter]);
+
+    /** 퀘스트 상세에서 선택된 NPC의 출현 맵 목록 조회 */
+    useEffect(() => {
+        const npcId = selectedQuest?.npc_id ?? selectedQuest?.npcId ?? "";
+        if (!npcId || !isChronoStoryWorld) {
+            setNpcLocationMaps([]);
+            return;
+        }
+        fetchChronostoryNpcDetail(npcId)
+            .then((res) => {
+                const data = res?.data ?? res;
+                const maps = data?.chronostoryNpcMaps ?? [];
+                setNpcLocationMaps(Array.isArray(maps) ? maps : []);
+            })
+            .catch(() => setNpcLocationMaps([]));
+    }, [selectedQuest?.npc_id, selectedQuest?.npcId, isChronoStoryWorld]);
+
+    /** 요구 아이템별 드랍 위치 조회 (req_item_1..4) */
+    useEffect(() => {
+        if (!selectedQuest || !isChronoStoryWorld) {
+            setItemDropsCache({});
+            return;
+        }
+        const ids = [];
+        for (let i = 1; i <= 4; i++) {
+            const id = selectedQuest[`req_item_${i}`] ?? selectedQuest[`reqItem${i}`] ?? "";
+            if (id && String(id).trim()) ids.push(String(id).trim());
+        }
+        for (let i = 1; i <= 2; i++) {
+            const id = selectedQuest[`reward_item_${i}`] ?? selectedQuest[`rewardItem${i}`] ?? "";
+            if (id && String(id).trim()) ids.push(String(id).trim());
+        }
+        try {
+            const req = selectedQuest?.requirements ?? selectedQuest?.requirementsParsed;
+            const obj = typeof req === "string" ? JSON.parse(req) : req;
+            const itemArr = obj?.item ?? obj?.items ?? [];
+            if (Array.isArray(itemArr)) {
+                itemArr.forEach((it) => {
+                    const id = it?.id ?? it?.item_id ?? "";
+                    if (id && String(id).trim()) ids.push(String(id).trim());
+                });
+            }
+        } catch (_) { /* ignore */ }
+        try {
+            const rew = selectedQuest?.rewards ?? selectedQuest?.rewardParsed;
+            const obj = typeof rew === "string" ? JSON.parse(rew) : rew;
+            const arr = obj?.item ?? obj?.items ?? [];
+            if (Array.isArray(arr)) {
+                arr.forEach((it) => {
+                    const id = it?.id ?? it?.item_id ?? "";
+                    if (id && String(id).trim()) ids.push(String(id).trim());
+                });
+            }
+        } catch (_) { /* ignore */ }
+        if (ids.length === 0) {
+            setItemDropsCache({});
+            return;
+        }
+        const uniq = [...new Set(ids)];
+        setItemDropsCache((prev) => {
+            const next = { ...prev };
+            uniq.forEach((id) => { next[id] = next[id] ?? null; });
+            return next;
+        });
+        uniq.forEach((itemId) => {
+            fetchChronostoryItemDrops(itemId)
+                .then((res) => {
+                    const data = res?.data ?? res;
+                    const drops = data?.drops ?? [];
+                    setItemDropsCache((prev) => ({ ...prev, [itemId]: Array.isArray(drops) ? drops : [] }));
+                })
+                .catch(() => setItemDropsCache((prev) => ({ ...prev, [itemId]: [] })));
+        });
+    }, [selectedQuest, isChronoStoryWorld]);
+
+    useEffect(() => {
+        if (!itemPopup?.itemId) {
+            setItemDetail(null);
+            return;
+        }
+        setItemDetail(null);
+        fetchChronostoryItemDetail(itemPopup.itemId)
+            .then((res) => {
+                const data = res?.data ?? res;
+                setItemDetail({ item: data?.item ?? {}, drops: Array.isArray(data?.drops) ? data.drops : [] });
+            })
+            .catch(() => setItemDetail({ item: { item_id: itemPopup.itemId }, drops: [] }));
+    }, [itemPopup?.itemId]);
 
     const questItems = useMemo(() => {
         return toQuestItems(source, apiItems, csvData.headers, csvData.rows);
@@ -309,7 +430,8 @@ export default function QuestList() {
     };
 
     return (
-        <div className="map-page">
+        <div className="quest-list-wrapper" style={{ display: "flex", flexDirection: "column", flex: 1, minHeight: 0, width: "100%" }}>
+        <div className="map-page" style={{ flex: 1, minHeight: 0, display: "flex", flexDirection: "column" }}>
             <div className="map-header">
                 <h2>퀘스트</h2>
                 {isChronoStoryWorld ? (
@@ -325,7 +447,13 @@ export default function QuestList() {
                 )}
             </div>
 
-            <div className="map-grid monster-list-grid">
+            <div
+                ref={splitContainerRef}
+                className="map-grid monster-list-grid quest-split-layout"
+                style={{
+                    gridTemplateColumns: `minmax(200px, ${listPanelPercent}%) 8px minmax(200px, 1fr)`
+                }}
+            >
                 {/* 좌측: 퀘스트 목록 */}
                 <section className="map-card map-list-card">
                     <div className="map-card-header">
@@ -552,6 +680,18 @@ export default function QuestList() {
                     )}
                 </section>
 
+                {/* 드래그하여 목록/상세 비율 조절 */}
+                <div
+                    role="presentation"
+                    className="quest-panel-resize-handle"
+                    onMouseDown={(e) => {
+                        e.preventDefault();
+                        splitterStartRef.current = { clientX: e.clientX, percent: listPanelPercent };
+                        setResizingSplitter(true);
+                    }}
+                    title="드래그하여 목록/상세 너비 조절"
+                />
+
                 {/* 우측: 퀘스트 상세 */}
                 <section className="map-card map-detail-card">
                     <div className="map-card-header">
@@ -568,10 +708,11 @@ export default function QuestList() {
                                 const npcName = selectedQuest.npc_name ?? selectedQuest.npcName ?? "";
                                 if (!npcImgUrl) return null;
                                 return (
-                                    <div className="map-section" style={{ marginBottom: "16px" }}>
+                                    <div key={`quest-provider-${selectedQuest?.quest_id ?? selectedQuest?.id ?? ""}-${npcImgUrl}`} className="map-section" style={{ marginBottom: "16px" }}>
                                         <h4>퀘스트 제공자</h4>
                                         <div style={{ display: "flex", alignItems: "center", gap: "12px", flexWrap: "wrap" }}>
                                             <img
+                                                key={`npc-provider-${selectedQuest?.quest_id ?? selectedQuest?.id ?? ""}-${npcImgUrl}`}
                                                 src={npcImgUrl}
                                                 alt={npcName || "NPC"}
                                                 style={{ width: 64, height: 64, objectFit: "contain", borderRadius: "8px", background: "var(--app-bg-secondary, #f0f0f0)" }}
@@ -587,7 +728,26 @@ export default function QuestList() {
                                 <div className="map-info-grid">
                                     {["quest_name", "quest_name_kr", "region", "region_name", "npc_id", "npc_name", "parent_name", "quest_order", "req_level", "req_jobs"].map((k) => {
                                         const label = detailLabelMap[k] ?? k;
-                                        const val = selectedQuest[k] ?? selectedQuest[k.replace(/_/g, "")] ?? "";
+                                        let val;
+                                        if (k === "region") {
+                                            const first = npcLocationMaps[0];
+                                            if (!first) val = "";
+                                            else {
+                                                const kr = first.town_name_kr ?? first.townNameKr ?? "";
+                                                const en = first.town_name_en ?? first.townNameEn ?? "";
+                                                val = kr && en ? `${kr} (${en})` : (kr || en || "");
+                                            }
+                                        } else if (k === "region_name") {
+                                            const first = npcLocationMaps[0];
+                                            if (!first) val = "";
+                                            else {
+                                                const kr = first.map_name_kr ?? first.mapNameKr ?? "";
+                                                const en = first.map_name_en ?? first.mapNameEn ?? "";
+                                                val = kr && en ? `${kr} (${en})` : (kr || en || "");
+                                            }
+                                        } else {
+                                            val = selectedQuest[k] ?? selectedQuest[k.replace(/_/g, "")] ?? "";
+                                        }
                                         return (
                                             <div key={k} className="map-info-item">
                                                 <div className="map-info-label">{label}</div>
@@ -614,10 +774,104 @@ export default function QuestList() {
                             </div>
                             <div className="map-section">
                                 <h4>요구 조건 (아이템/몹/메소)</h4>
+                                {[1, 2, 3, 4].filter((i) => {
+                                    const id = selectedQuest[`req_item_${i}`] ?? selectedQuest[`reqItem${i}`] ?? "";
+                                    return id != null && String(id).trim() !== "";
+                                }).length > 0 && (
+                                    <div style={{ marginBottom: "16px" }}>
+                                        <div style={{ fontSize: "12px", color: "var(--app-muted-text-color)", marginBottom: "8px", fontWeight: 600 }}>요구 아이템</div>
+                                        {[1, 2, 3, 4].map((i) => {
+                                            const id = selectedQuest[`req_item_${i}`] ?? selectedQuest[`reqItem${i}`] ?? "";
+                                            const name = selectedQuest[`req_item_name_${i}`] ?? selectedQuest[`reqItemName${i}`] ?? "";
+                                            const count = selectedQuest[`req_item_count_${i}`] ?? selectedQuest[`reqItemCount${i}`] ?? "";
+                                            if (!id || String(id).trim() === "") return null;
+                                            const itemId = String(id).trim();
+                                            const imgUrl = getItemImageUrl(itemId);
+                                            const drops = itemDropsCache[itemId];
+                                            const dropLabels = Array.isArray(drops)
+                                                ? drops.map((d) => d.mob_name_kr ?? d.mob_name_en ?? d.mobNameKr ?? d.mobNameEn ?? d.mob_id ?? "").filter(Boolean)
+                                                : [];
+                                            const acquisitionText = drops === null || drops === undefined
+                                                ? "조회 중…"
+                                                : (dropLabels.length > 0 ? `드랍: ${dropLabels.join(", ")}` : "드랍 정보 없음");
+                                            return (
+                                                <div
+                                                    key={`req-item-${i}`}
+                                                    role="button"
+                                                    tabIndex={0}
+                                                    onClick={() => setItemPopup({ itemId, itemName: name || "" })}
+                                                    onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setItemPopup({ itemId, itemName: name || "" }); } }}
+                                                    style={{
+                                                        display: "flex",
+                                                        alignItems: "flex-start",
+                                                        gap: "12px",
+                                                        padding: "10px 12px",
+                                                        background: "var(--app-bg-secondary, rgba(0,0,0,0.04))",
+                                                        borderRadius: "8px",
+                                                        marginBottom: "8px",
+                                                        border: "1px solid var(--app-border, rgba(0,0,0,0.08))",
+                                                        cursor: "pointer"
+                                                    }}
+                                                >
+                                                    {imgUrl && (
+                                                        <img
+                                                            src={imgUrl}
+                                                            alt={name || itemId}
+                                                            style={{ width: 40, height: 40, objectFit: "contain", flexShrink: 0, background: "var(--app-bg-tertiary, #f0f0f0)", borderRadius: "6px" }}
+                                                            onError={(e) => { e.target.style.display = "none"; }}
+                                                        />
+                                                    )}
+                                                    <div style={{ flex: 1, minWidth: 0 }}>
+                                                        <div style={{ fontWeight: 600, fontSize: "14px" }}>
+                                                            {name ? `${name} x ${count || "?"}` : `아이템 ID ${itemId} x ${count || "?"}`}
+                                                        </div>
+                                                        <div style={{ fontSize: "12px", color: "var(--app-muted-text-color)", marginTop: "4px" }}>
+                                                            <span style={{ fontWeight: 600 }}>획득처</span>: {acquisitionText}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                )}
+                                {(() => {
+                                    const reqNpcId = selectedQuest.req_npc ?? selectedQuest.reqNpc ?? "";
+                                    const reqNpcName = selectedQuest.req_npc_name ?? selectedQuest.reqNpcName ?? "";
+                                    if (!reqNpcId && !reqNpcName) return null;
+                                    const reqNpcImgUrl = reqNpcId ? getNpcImageUrl(reqNpcId) : null;
+                                    return (
+                                        <div style={{ marginBottom: "16px" }}>
+                                            <div style={{ fontSize: "12px", color: "var(--app-muted-text-color)", marginBottom: "8px", fontWeight: 600 }}>요구 NPC</div>
+                                            <div
+                                                style={{
+                                                    display: "flex",
+                                                    alignItems: "center",
+                                                    gap: "12px",
+                                                    padding: "10px 12px",
+                                                    background: "var(--app-bg-secondary, rgba(0,0,0,0.04))",
+                                                    borderRadius: "8px",
+                                                    border: "1px solid var(--app-border, rgba(0,0,0,0.08))"
+                                                }}
+                                            >
+                                                {reqNpcImgUrl && (
+                                                    <img
+                                                        key={`req-npc-img-${selectedQuest?.quest_id ?? selectedQuest?.id ?? ""}-${reqNpcImgUrl}`}
+                                                        src={reqNpcImgUrl}
+                                                        alt={reqNpcName || reqNpcId}
+                                                        style={{ width: 40, height: 40, objectFit: "contain", flexShrink: 0, background: "var(--app-bg-tertiary, #f0f0f0)", borderRadius: "6px" }}
+                                                        onError={(e) => { e.target.style.display = "none"; }}
+                                                    />
+                                                )}
+                                                <div>
+                                                    <div style={{ fontWeight: 600, fontSize: "14px" }}>{reqNpcName || `NPC ID ${reqNpcId}`}</div>
+                                                    {reqNpcId && reqNpcName && <div style={{ fontSize: "12px", color: "var(--app-muted-text-color)" }}>ID: {reqNpcId}</div>}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    );
+                                })()}
                                 <div className="map-info-grid">
-                                    {["give_item_1", "give_item_name_1", "give_item_count_1", "req_npc", "req_npc_name", "req_mesos",
-                                        "req_item_1", "req_item_name_1", "req_item_count_1", "req_item_2", "req_item_name_2", "req_item_count_2",
-                                        "req_item_3", "req_item_name_3", "req_item_count_3", "req_item_4", "req_item_name_4", "req_item_count_4",
+                                    {["give_item_1", "give_item_name_1", "give_item_count_1", "req_mesos",
                                         "req_mob_1", "req_mob_name_1", "req_mob_count_1", "req_mob_2", "req_mob_name_2", "req_mob_count_2"
                                     ].map((k) => {
                                         const label = detailLabelMap[k] ?? k;
@@ -659,7 +913,26 @@ export default function QuestList() {
                                             const name = it?.name ?? it?.item_name_kr ?? it?.item_name_en ?? "";
                                             const count = it?.count ?? "?";
                                             const display = name ? `${name} x ${count}` : `ID ${id} x ${count}`;
-                                            return <div key={`req-item-${i}`} style={rowStyle}><span style={{ marginRight: "10px", color: "var(--app-muted-text-color, #666)", fontWeight: 600 }}>{i + 1}.</span><span>{display}</span></div>;
+                                            const itemIdStr = String(id).trim();
+                                            const imgUrl = itemIdStr && itemIdStr !== "-" ? getItemImageUrl(itemIdStr) : null;
+                                            const rawDrops = itemIdStr && selectedQuest ? itemDropsCache[itemIdStr] : undefined;
+                                            const dropLabels = Array.isArray(rawDrops) ? rawDrops.map((d) => d.mob_name_kr ?? d.mob_name_en ?? d.mobNameKr ?? d.mobNameEn ?? d.mob_id ?? "").filter(Boolean) : [];
+                                            const acquisitionText = rawDrops === null || rawDrops === undefined ? "조회 중…" : (dropLabels.length > 0 ? `드랍: ${dropLabels.join(", ")}` : "드랍 정보 없음");
+                                            return (
+                                                <div
+                                                    key={`req-item-${i}`}
+                                                    role="button"
+                                                    tabIndex={0}
+                                                    onClick={() => setItemPopup({ itemId: itemIdStr, itemName: name || "" })}
+                                                    onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setItemPopup({ itemId: itemIdStr, itemName: name || "" }); } }}
+                                                    style={{ ...rowStyle, flexWrap: "wrap", gap: "8px", cursor: "pointer" }}
+                                                >
+                                                    {imgUrl && <img src={imgUrl} alt="" style={{ width: 32, height: 32, objectFit: "contain", borderRadius: "4px", background: "var(--app-bg-tertiary)" }} onError={(e) => { e.target.style.display = "none"; }} />}
+                                                    <span style={{ marginRight: "10px", color: "var(--app-muted-text-color, #666)", fontWeight: 600 }}>{i + 1}.</span>
+                                                    <span>{display}</span>
+                                                    <span style={{ fontSize: "12px", color: "var(--app-muted-text-color)", width: "100%", marginLeft: "42px" }}><strong>획득처</strong>: {acquisitionText}</span>
+                                                </div>
+                                            );
                                         });
                                     }
                                     if (Array.isArray(npcArr)) {
@@ -668,7 +941,15 @@ export default function QuestList() {
                                             const name = n?.name ?? n?.npc_name ?? "";
                                             const count = n?.count ?? "?";
                                             const display = name ? (count !== "?" ? `${name} 만나기 x ${count}` : `${name} 만나기`) : `NPC ID ${id}`;
-                                            return <div key={`req-npc-${i}`} style={rowStyle}><span style={{ marginRight: "10px", color: "var(--app-muted-text-color, #666)", fontWeight: 600 }}>{i + 1}.</span><span>{display}</span></div>;
+                                            const npcIdStr = String(id).trim();
+                                            const npcImgUrl = npcIdStr && npcIdStr !== "-" ? getNpcImageUrl(npcIdStr) : null;
+                                            return (
+                                                <div key={`req-npc-${selectedQuest?.quest_id ?? selectedQuest?.id ?? "q"}-${i}`} style={{ ...rowStyle, flexWrap: "wrap", gap: "8px" }}>
+                                                    {npcImgUrl && <img key={`${selectedQuest?.quest_id ?? selectedQuest?.id}-npc-${i}-${npcImgUrl}`} src={npcImgUrl} alt={name || id} style={{ width: 32, height: 32, objectFit: "contain", borderRadius: "4px", background: "var(--app-bg-tertiary)" }} onError={(e) => { e.target.style.display = "none"; }} />}
+                                                    <span style={{ marginRight: "10px", color: "var(--app-muted-text-color, #666)", fontWeight: 600 }}>{i + 1}.</span>
+                                                    <span>{display}</span>
+                                                </div>
+                                            );
                                         });
                                     }
                                     if (obj?.itemLines && Array.isArray(obj.itemLines)) {
@@ -701,12 +982,122 @@ export default function QuestList() {
                             })()}
                             <div className="map-section">
                                 <h4>보상</h4>
+                                {[1, 2].filter((i) => {
+                                    const id = selectedQuest[`reward_item_${i}`] ?? selectedQuest[`rewardItem${i}`] ?? "";
+                                    return id != null && String(id).trim() !== "";
+                                }).length > 0 && (
+                                    <div style={{ marginBottom: "16px" }}>
+                                        <div style={{ fontSize: "12px", color: "var(--app-muted-text-color)", marginBottom: "8px", fontWeight: 600 }}>보상 아이템</div>
+                                        {[1, 2].map((i) => {
+                                            const id = selectedQuest[`reward_item_${i}`] ?? selectedQuest[`rewardItem${i}`] ?? "";
+                                            const name = selectedQuest[`reward_item_name_${i}`] ?? selectedQuest[`rewardItemName${i}`] ?? "";
+                                            const count = selectedQuest[`reward_item_count_${i}`] ?? selectedQuest[`rewardItemCount${i}`] ?? "";
+                                            if (!id || String(id).trim() === "") return null;
+                                            const itemId = String(id).trim();
+                                            const imgUrl = getItemImageUrl(itemId);
+                                            const drops = itemDropsCache[itemId];
+                                            const dropLabels = Array.isArray(drops)
+                                                ? drops.map((d) => d.mob_name_kr ?? d.mob_name_en ?? d.mobNameKr ?? d.mobNameEn ?? d.mob_id ?? "").filter(Boolean)
+                                                : [];
+                                            const acquisitionText = drops === null || drops === undefined
+                                                ? "조회 중…"
+                                                : (dropLabels.length > 0 ? `드랍: ${dropLabels.join(", ")}` : "드랍 정보 없음");
+                                            return (
+                                                <div
+                                                    key={`reward-item-${i}`}
+                                                    role="button"
+                                                    tabIndex={0}
+                                                    onClick={() => setItemPopup({ itemId, itemName: name || "" })}
+                                                    onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setItemPopup({ itemId, itemName: name || "" }); } }}
+                                                    style={{
+                                                        display: "flex",
+                                                        alignItems: "flex-start",
+                                                        gap: "12px",
+                                                        padding: "10px 12px",
+                                                        background: "var(--app-bg-secondary, rgba(0,0,0,0.04))",
+                                                        borderRadius: "8px",
+                                                        marginBottom: "8px",
+                                                        border: "1px solid var(--app-border, rgba(0,0,0,0.08))",
+                                                        cursor: "pointer"
+                                                    }}
+                                                >
+                                                    {imgUrl && (
+                                                        <img
+                                                            src={imgUrl}
+                                                            alt={name || itemId}
+                                                            style={{ width: 40, height: 40, objectFit: "contain", flexShrink: 0, background: "var(--app-bg-tertiary, #f0f0f0)", borderRadius: "6px" }}
+                                                            onError={(e) => { e.target.style.display = "none"; }}
+                                                        />
+                                                    )}
+                                                    <div style={{ flex: 1, minWidth: 0 }}>
+                                                        <div style={{ fontWeight: 600, fontSize: "14px" }}>
+                                                            {name ? `${name} x ${count || "?"}` : `아이템 ID ${itemId} x ${count || "?"}`}
+                                                        </div>
+                                                        <div style={{ fontSize: "12px", color: "var(--app-muted-text-color)", marginTop: "4px" }}>
+                                                            <span style={{ fontWeight: 600 }}>획득처</span>: {acquisitionText}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                )}
+                                {(() => {
+                                    const exp = selectedQuest.reward_exp ?? selectedQuest.rewardExp ?? "";
+                                    const mesos = selectedQuest.reward_mesos ?? selectedQuest.rewardMesos ?? "";
+                                    const fame = selectedQuest.reward_fame ?? selectedQuest.rewardFame ?? "";
+                                    const hasExp = exp !== "" && exp != null && String(exp).trim() !== "";
+                                    const hasMesos = mesos !== "" && mesos != null && String(mesos).trim() !== "";
+                                    const hasFame = fame !== "" && fame != null && String(fame).trim() !== "";
+                                    if (!hasExp && !hasMesos && !hasFame) return null;
+                                    const boxStyle = {
+                                        display: "flex",
+                                        flexWrap: "wrap",
+                                        gap: "12px",
+                                        padding: "10px 12px",
+                                        background: "var(--app-bg-secondary, rgba(0,0,0,0.04))",
+                                        borderRadius: "8px",
+                                        border: "1px solid var(--app-border, rgba(0,0,0,0.08))"
+                                    };
+                                    const chipStyle = {
+                                        display: "inline-flex",
+                                        alignItems: "center",
+                                        gap: "6px",
+                                        padding: "6px 12px",
+                                        background: "var(--app-bg-tertiary, #f0f0f0)",
+                                        borderRadius: "6px",
+                                        fontSize: "14px",
+                                        fontWeight: 600
+                                    };
+                                    return (
+                                        <div style={{ marginBottom: "16px" }}>
+                                            <div style={{ fontSize: "12px", color: "var(--app-muted-text-color)", marginBottom: "8px", fontWeight: 600 }}>보상 경험치 · 메소 · 명성</div>
+                                            <div style={boxStyle}>
+                                                {hasExp && (
+                                                    <span style={chipStyle}>
+                                                        <span style={{ color: "var(--app-muted-text-color)", fontWeight: 500, fontSize: "12px" }}>경험치</span>
+                                                        {Number(exp).toLocaleString()}
+                                                    </span>
+                                                )}
+                                                {hasMesos && (
+                                                    <span style={chipStyle}>
+                                                        <span style={{ color: "var(--app-muted-text-color)", fontWeight: 500, fontSize: "12px" }}>메소</span>
+                                                        {Number(mesos).toLocaleString()}
+                                                    </span>
+                                                )}
+                                                {hasFame && (
+                                                    <span style={chipStyle}>
+                                                        <span style={{ color: "var(--app-muted-text-color)", fontWeight: 500, fontSize: "12px" }}>명성</span>
+                                                        {Number(fame).toLocaleString()}
+                                                    </span>
+                                                )}
+                                            </div>
+                                        </div>
+                                    );
+                                })()}
                                 <div className="map-info-grid">
-                                    {["reward_exp", "reward_mesos", "reward_fame",
-                                        "random_item_reward", "random_item_reward_count", "random_item_reward_chance",
-                                        "select_item_reward", "select_item_reward_count",
-                                        "reward_item_1", "reward_item_name_1", "reward_item_count_1",
-                                        "reward_item_2", "reward_item_name_2", "reward_item_count_2"
+                                    {["random_item_reward", "random_item_reward_count", "random_item_reward_chance",
+                                        "select_item_reward", "select_item_reward_count"
                                     ].map((k) => {
                                         const label = detailLabelMap[k] ?? k;
                                         const val = selectedQuest[k] ?? "";
@@ -746,22 +1137,36 @@ export default function QuestList() {
                                             const name = it?.name ?? it?.item_name_kr ?? it?.item_name_en ?? "";
                                             const count = it?.count ?? "?";
                                             const display = name ? `${name} x ${count}` : `ID ${id} x ${count}`;
+                                            const itemIdStr = String(id).trim();
+                                            const imgUrl = itemIdStr && itemIdStr !== "-" ? getItemImageUrl(itemIdStr) : null;
+                                            const rawDropsReward = itemIdStr && selectedQuest ? itemDropsCache[itemIdStr] : undefined;
+                                            const dropLabelsReward = Array.isArray(rawDropsReward) ? rawDropsReward.map((d) => d.mob_name_kr ?? d.mob_name_en ?? d.mobNameKr ?? d.mobNameEn ?? d.mob_id ?? "").filter(Boolean) : [];
+                                            const acquisitionTextReward = rawDropsReward === null || rawDropsReward === undefined ? "조회 중…" : (dropLabelsReward.length > 0 ? `드랍: ${dropLabelsReward.join(", ")}` : "드랍 정보 없음");
                                             return (
                                                 <div
                                                     key={i}
+                                                    role="button"
+                                                    tabIndex={0}
+                                                    onClick={() => setItemPopup({ itemId: itemIdStr, itemName: name || "" })}
+                                                    onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setItemPopup({ itemId: itemIdStr, itemName: name || "" }); } }}
                                                     style={{
                                                         display: "flex",
-                                                        alignItems: "center",
+                                                        alignItems: "flex-start",
+                                                        flexWrap: "wrap",
+                                                        gap: "8px",
                                                         padding: "8px 12px",
                                                         background: "var(--app-bg-secondary, rgba(0,0,0,0.04))",
                                                         borderRadius: "6px",
                                                         marginBottom: "6px",
                                                         border: "1px solid var(--app-border-color, rgba(0,0,0,0.08))",
-                                                        fontSize: "14px"
+                                                        fontSize: "14px",
+                                                        cursor: "pointer"
                                                     }}
                                                 >
+                                                    {imgUrl && <img src={imgUrl} alt="" style={{ width: 32, height: 32, objectFit: "contain", borderRadius: "4px", background: "var(--app-bg-tertiary)" }} onError={(e) => { e.target.style.display = "none"; }} />}
                                                     <span style={{ marginRight: "10px", color: "var(--app-muted-text-color, #666)", fontWeight: 600 }}>{i + 1}.</span>
                                                     <span>{display}</span>
+                                                    <span style={{ fontSize: "12px", color: "var(--app-muted-text-color)", width: "100%", marginLeft: "42px" }}><strong>획득처</strong>: {acquisitionTextReward}</span>
                                                 </div>
                                             );
                                         });
@@ -810,6 +1215,103 @@ export default function QuestList() {
                     )}
                 </section>
             </div>
+        </div>
+        {itemPopup && (
+            <div
+                role="dialog"
+                aria-modal="true"
+                aria-label="아이템 상세"
+                style={{
+                    position: "fixed",
+                    inset: 0,
+                    zIndex: 1000,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    padding: "16px",
+                    background: "rgba(0,0,0,0.5)",
+                    boxSizing: "border-box"
+                }}
+                onClick={() => setItemPopup(null)}
+            >
+                <div
+                    style={{
+                        background: "var(--app-bg-primary, #fff)",
+                        borderRadius: "12px",
+                        boxShadow: "0 8px 32px rgba(0,0,0,0.2)",
+                        maxWidth: "480px",
+                        width: "100%",
+                        maxHeight: "85vh",
+                        overflow: "auto",
+                        padding: "20px"
+                    }}
+                    onClick={(e) => e.stopPropagation()}
+                >
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px", gap: "12px" }}>
+                        <h3 style={{ margin: 0, fontSize: "18px", flex: 1 }}>아이템 상세</h3>
+                        <button
+                            type="button"
+                            className="map-btn item-popup-close-btn"
+                            onClick={() => setItemPopup(null)}
+                            aria-label="닫기"
+                        >
+                            <span style={{ marginRight: "4px" }}>×</span> 닫기
+                        </button>
+                    </div>
+                    {!itemDetail ? (
+                        <div style={{ padding: "24px", textAlign: "center", color: "var(--app-muted-text-color)" }}>조회 중…</div>
+                    ) : (
+                        <>
+                            <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "16px", paddingBottom: "12px", borderBottom: "1px solid var(--app-border, #eee)" }}>
+                                <img src={getItemImageUrl(itemDetail.item?.item_id ?? itemPopup.itemId)} alt="" style={{ width: 48, height: 48, objectFit: "contain", background: "var(--app-bg-tertiary)", borderRadius: "8px" }} onError={(e) => { e.target.style.display = "none"; }} />
+                                <div>
+                                    <div style={{ fontWeight: 600, fontSize: "16px" }}>{itemDetail.item?.item_name_kr || itemDetail.item?.item_name_en || itemPopup.itemName || `ID ${itemPopup.itemId}`}</div>
+                                    {(itemDetail.item?.item_name_kr || itemDetail.item?.item_name_en) && (itemDetail.item?.item_name_kr !== itemDetail.item?.item_name_en) && (
+                                        <div style={{ fontSize: "13px", color: "var(--app-muted-text-color)" }}>{itemDetail.item?.item_name_en}</div>
+                                    )}
+                                    {(itemDetail.item?.type || itemDetail.item?.sub_type) && (
+                                        <div style={{ fontSize: "12px", color: "var(--app-muted-text-color)", marginTop: "4px" }}>{[itemDetail.item?.type, itemDetail.item?.sub_type].filter(Boolean).join(" / ")}</div>
+                                    )}
+                                </div>
+                            </div>
+                            <div style={{ marginBottom: "12px", fontWeight: 600, fontSize: "14px" }}>드랍 몬스터 · 출현 맵</div>
+                            {(!itemDetail.drops || itemDetail.drops.length === 0) ? (
+                                <div style={{ fontSize: "13px", color: "var(--app-muted-text-color)" }}>드랍 정보 없음</div>
+                            ) : (
+                                <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+                                    {itemDetail.drops.map((d, idx) => {
+                                        const mobName = d.mob_name_kr ?? d.mob_name_en ?? d.mob_id ?? "";
+                                        const maps = Array.isArray(d.maps) ? d.maps : [];
+                                        return (
+                                            <div key={d.mob_id ?? idx} style={{ padding: "10px 12px", background: "var(--app-bg-secondary)", borderRadius: "8px", border: "1px solid var(--app-border)" }}>
+                                                <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "6px" }}>
+                                                    {getMonsterImageUrl(d.mob_id) && <img src={getMonsterImageUrl(d.mob_id)} alt="" style={{ width: 32, height: 32, objectFit: "contain" }} onError={(e) => { e.target.style.display = "none"; }} />}
+                                                    <span style={{ fontWeight: 600, fontSize: "14px" }}>{mobName}</span>
+                                                    {(d.is_boss === true || String(d.is_boss || "").toUpperCase().trim() === "TRUE") && <span style={{ fontSize: "11px", background: "#e53935", color: "#fff", padding: "2px 6px", borderRadius: "4px" }}>보스</span>}
+                                                </div>
+                                                {maps.length > 0 ? (
+                                                    <div style={{ fontSize: "12px", color: "var(--app-muted-text-color)", marginLeft: "40px" }}>
+                                                        <div style={{ fontWeight: 600, marginBottom: "4px" }}>출현 맵</div>
+                                                        <div style={{ display: "flex", flexDirection: "column", gap: "2px", flexWrap: "wrap", wordBreak: "break-word" }}>
+                                                            {maps.map((m, mi) => {
+                                                                const line = [(m.town_name_kr || m.town_name_en || "").trim(), (m.map_name_kr || m.map_name_en || m.map_id || "").trim()].filter(Boolean).join(" · ");
+                                                                return line ? <div key={mi} style={{ padding: "2px 0" }}>· {line}</div> : null;
+                                                            })}
+                                                        </div>
+                                                    </div>
+                                                ) : (
+                                                    <div style={{ fontSize: "12px", color: "var(--app-muted-text-color)", marginLeft: "40px" }}>출현 맵 정보 없음</div>
+                                                )}
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            )}
+                        </>
+                    )}
+                </div>
+            </div>
+        )}
         </div>
     );
 }
