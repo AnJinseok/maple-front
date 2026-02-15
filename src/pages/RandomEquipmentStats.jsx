@@ -80,9 +80,26 @@ export default function RandomEquipmentStats() {
     return (
         <div className="map-page">
             <div className="map-header">
-                <h2>랜덤 장비 스탯 시뮬레이션</h2>
+                <h2 style={{ display: "flex", alignItems: "center", gap: "10px", flexWrap: "wrap" }}>
+                    랜덤 장비 스탯 시뮬레이션
+                    <span
+                        className="dev-badge"
+                        style={{
+                            fontSize: "12px",
+                            fontWeight: 600,
+                            padding: "4px 10px",
+                            borderRadius: "999px",
+                            background: "var(--dev-badge-bg, #f0ad4e)",
+                            color: "var(--dev-badge-fg, #fff)",
+                            letterSpacing: "0.02em"
+                        }}
+                    >
+                        개발 중
+                    </span>
+                </h2>
                 <p className="map-subtitle">
                     장비의 랜덤 스탯은 해당 장비의 레벨 제한으로 결정됩니다. 레벨을 입력하면 범위와 스탯별 변동량을 계산하고, 기본 스탯을 넣으면 시뮬레이션을 돌릴 수 있습니다.
+                    <em style={{ display: "block", marginTop: "6px", opacity: 0.9 }}>※ 공식·UI가 변경될 수 있는 개발 중 기능입니다.</em>
                 </p>
             </div>
 

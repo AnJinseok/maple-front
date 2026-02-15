@@ -14,12 +14,26 @@ export const API_ORIGIN =
 
 /**
  * 이미지(items, npcs, minimaps, monsters, monster-moves) 요청용 오리진.
- * 로컬 PC에서는 nginx가 없으므로 VITE_STATIC_ORIGIN으로 서버 주소 지정 시 해당 서버에서 이미지 로드.
+ * - API /api/config 에서 같은 망일 때 staticOrigin 을 내려주면 그걸 우선 사용 → 같은 망에서도 이미지 로드.
+ * - 없으면 접속한 주소(window.location.origin) 사용.
  */
-const STATIC_ORIGIN =
-    typeof import.meta.env?.VITE_STATIC_ORIGIN === "string" && import.meta.env.VITE_STATIC_ORIGIN.trim() !== ""
-        ? import.meta.env.VITE_STATIC_ORIGIN.replace(/\/$/, "")
-        : API_ORIGIN;
+let _staticOriginOverride = null;
+
+/** 같은 망일 때 서버가 알려준 정적 주소 설정 (main에서 /api/config 응답으로 호출) */
+export function setStaticOriginOverride(url) {
+    _staticOriginOverride = (url && String(url).trim()) ? String(url).trim().replace(/\/+$/, "") : null;
+}
+
+function getStaticOrigin() {
+    if (_staticOriginOverride) return _staticOriginOverride;
+    if (typeof window !== "undefined" && window.location?.origin) {
+        return window.location.origin.replace(/\/$/, "");
+    }
+    if (typeof import.meta.env?.VITE_STATIC_ORIGIN === "string" && import.meta.env.VITE_STATIC_ORIGIN.trim() !== "") {
+        return import.meta.env.VITE_STATIC_ORIGIN.replace(/\/$/, "");
+    }
+    return API_ORIGIN;
+}
 
 /**
  * 몬스터 이미지(GIF) URL 반환 (resources/static/monster-moves/{mob_id}.gif)
@@ -28,7 +42,7 @@ const STATIC_ORIGIN =
  */
 export function getMonsterImageUrl(mobId) {
     if (mobId == null || mobId === "") return null;
-    return `${STATIC_ORIGIN}/monster-moves/${encodeURIComponent(String(mobId))}.gif`;
+    return `${getStaticOrigin()}/monster-moves/${encodeURIComponent(String(mobId))}.gif`;
 }
 
 /**
@@ -38,7 +52,7 @@ export function getMonsterImageUrl(mobId) {
  */
 export function getMapImageUrl(mapId) {
     if (mapId == null || mapId === "") return null;
-    return `${STATIC_ORIGIN}/minimaps/${encodeURIComponent(String(mapId))}.png`;
+    return `${getStaticOrigin()}/minimaps/${encodeURIComponent(String(mapId))}.png`;
 }
 
 /**
@@ -49,7 +63,7 @@ export function getMapImageUrl(mapId) {
 export function getNpcImageUrl(npcId) {
     // 조건문: npcId가 비어있으면 이미지 URL을 만들지 않음
     if (npcId == null || npcId === "") return null;
-    return `${STATIC_ORIGIN}/npcs/${encodeURIComponent(String(npcId))}.png`;
+    return `${getStaticOrigin()}/npcs/${encodeURIComponent(String(npcId))}.png`;
 }
 
 /**
@@ -62,7 +76,7 @@ export function getNpcImageUrlByFilePath(npcFilePath) {
     const path = String(npcFilePath).trim();
     if (path.startsWith("http://") || path.startsWith("https://")) return path;
     const normalized = path.startsWith("/") ? path : `/${path}`;
-    return `${STATIC_ORIGIN}${normalized}`;
+    return `${getStaticOrigin()}${normalized}`;
 }
 
 /**
@@ -72,7 +86,7 @@ export function getNpcImageUrlByFilePath(npcFilePath) {
  */
 export function getItemImageUrl(itemId) {
     if (itemId == null || itemId === "") return null;
-    return `${STATIC_ORIGIN}/items/${encodeURIComponent(String(itemId))}.png`;
+    return `${getStaticOrigin()}/items/${encodeURIComponent(String(itemId))}.png`;
 }
 
 /**

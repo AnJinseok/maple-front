@@ -113,7 +113,22 @@ export default function SideMenu({ isOpen, onToggle }) {
                                     to="/random-equipment-stats"
                                     className={({ isActive }) => (isActive ? "active" : "")}
                                 >
-                                    랜덤 장비 스탯 시뮬레이션
+                                    <span style={{ display: "inline-flex", alignItems: "center", gap: "6px", flexWrap: "wrap" }}>
+                                        랜덤 장비 스탯 시뮬레이션
+                                        <span
+                                            className="side-menu-dev-badge"
+                                            style={{
+                                                fontSize: "10px",
+                                                fontWeight: 600,
+                                                padding: "2px 6px",
+                                                borderRadius: "999px",
+                                                background: "var(--dev-badge-bg, #f0ad4e)",
+                                                color: "var(--dev-badge-fg, #fff)"
+                                            }}
+                                        >
+                                            개발 중
+                                        </span>
+                                    </span>
                                 </NavLink>
                             </li>
                         </>
