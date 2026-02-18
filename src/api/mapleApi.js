@@ -26,11 +26,11 @@ export function setStaticOriginOverride(url) {
 
 function getStaticOrigin() {
     if (_staticOriginOverride) return _staticOriginOverride;
-    if (typeof window !== "undefined" && window.location?.origin) {
-        return window.location.origin.replace(/\/$/, "");
-    }
     if (typeof import.meta.env?.VITE_STATIC_ORIGIN === "string" && import.meta.env.VITE_STATIC_ORIGIN.trim() !== "") {
         return import.meta.env.VITE_STATIC_ORIGIN.replace(/\/$/, "");
+    }
+    if (typeof window !== "undefined" && window.location?.origin) {
+        return window.location.origin.replace(/\/$/, "");
     }
     return API_ORIGIN;
 }
