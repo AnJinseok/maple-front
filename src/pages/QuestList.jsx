@@ -1190,13 +1190,16 @@ export default function QuestList() {
                                     </div>
                                 );
                             })()}
-                            {["contents", "contents_kr", "category"].some((k) => selectedQuest[k]) && (
+                            {["contents", "contents_kr", "category"].some((k) => {
+                                const v = selectedQuest[k] ?? selectedQuest[k?.replace(/_([a-z])/g, (_, c) => c.toUpperCase())];
+                                return v !== undefined && v !== null && String(v).trim() !== "";
+                            }) && (
                                 <div className="map-section">
                                     <h4>기타</h4>
                                     <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
                                         {["contents", "contents_kr", "category"].map((k) => {
                                             const isContent = k === "contents" || k === "contents_kr";
-                                            const val = selectedQuest[k] ?? selectedQuest[k?.replace(/_/g, "")];
+                                            const val = selectedQuest[k] ?? selectedQuest[k?.replace(/_([a-z])/g, (_, c) => c.toUpperCase())];
                                             return (
                                                 <div key={k} className="map-info-item">
                                                     <div className="map-info-label">{detailLabelMap[k] ?? k}</div>
