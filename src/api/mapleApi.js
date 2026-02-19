@@ -318,7 +318,7 @@ export async function fetchChronostoryGachaponDropSubTypes() {
 
 /**
  * 크로노스토리 퀘스트 DB 목록 조회 (테이블 저장 데이터)
- * - 입력: params(object) 예: { page, size, keyword }
+ * - 입력: params(object) 예: { page, size, keywordQuest, keywordNpc, keywordRegion, sortBy, sortOrder }
  * - 출력: Promise(JSON) { data: { items, totalElements, page, size, totalPages } }
  */
 export async function fetchChronostoryQuests(params = {}) {

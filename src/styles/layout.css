@@ -788,6 +788,33 @@ html[data-theme="dark"] .map-table td {
     background: var(--app-bg-secondary, rgba(0, 0, 0, 0.04)) !important;
 }
 
+/* 선행 퀘스트 행 음영: 라이트 모드 (tr + td 모두 지정해 셀 배경에 덮이지 않도록) */
+.quest-list-table tbody tr.quest-list-row-prereq,
+.quest-list-table tbody tr.quest-list-row-prereq td {
+    background: rgba(0, 0, 0, 0.08);
+}
+.quest-prereq-swatch {
+    background: rgba(0, 0, 0, 0.08);
+}
+
+/* 선행 퀘스트 행 음영: 다크 모드(파란 톤, td에 !important로 map-table td 오버라이드) */
+html[data-theme="dark"] .quest-list-table tbody tr.quest-list-row-prereq,
+html[data-theme="dark"] .quest-list-table tbody tr.quest-list-row-prereq td {
+    background: rgba(59, 130, 246, 0.2) !important;
+}
+html[data-theme="dark"] .quest-prereq-swatch {
+    background: rgba(59, 130, 246, 0.2);
+}
+
+/* 퀘스트 상세: 보상 경험치·메소·명성 영역 — 다크 모드에서 음영 제거(글자 가독성) */
+html[data-theme="dark"] .quest-detail-reward-box {
+    background: transparent !important;
+    border-color: rgba(255, 255, 255, 0.12);
+}
+html[data-theme="dark"] .quest-detail-reward-chip {
+    background: transparent !important;
+}
+
 /* =========================
    가챠폰 목록 - 브라우저 크기에 맞춘 테이블/리스트 전환
    - 줌아웃으로 테이블+페이징까지 한 화면에 표시(스크롤 최소화)

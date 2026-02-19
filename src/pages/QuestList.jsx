@@ -99,6 +99,24 @@ function getQuestKey(item, index) {
     return s || `quest-${index}`;
 }
 
+/** 요구아이템(재료퀘) 여부: req_item_1~4 중 하나라도 값이 있으면 true */
+function isMaterialQuest(item) {
+    if (!item) return false;
+    for (let i = 1; i <= 4; i++) {
+        const v = item[`req_item_${i}`] ?? item[`reqItem${i}`];
+        if (v != null && String(v).trim() !== "") return true;
+    }
+    return false;
+}
+
+/** 선행 퀘스트가 있는지: prereq_quest_1 또는 prereq_quest_2 값이 있으면 true (리스트 음영 표시용) */
+function hasPrereqQuest(item) {
+    if (!item) return false;
+    const v1 = item.prereq_quest_1 ?? item.prereqQuest1 ?? "";
+    const v2 = item.prereq_quest_2 ?? item.prereqQuest2 ?? "";
+    return (v1 != null && String(v1).trim() !== "") || (v2 != null && String(v2).trim() !== "");
+}
+
 /**
  * 크로노스토리 퀘스트 DB 페이지
  * - 맵 리스트와 동일한 레이아웃: 좌측 목록 + 우측 상세
@@ -113,8 +131,12 @@ export default function QuestList() {
     const [csvData, setCsvData] = useState({ headers: [], rows: [] });
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
-    const [search, setSearch] = useState("");
-    const [submitSearch, setSubmitSearch] = useState("");
+    const [searchQuest, setSearchQuest] = useState("");
+    const [searchNpc, setSearchNpc] = useState("");
+    const [searchRegion, setSearchRegion] = useState("");
+    const [submitQuest, setSubmitQuest] = useState("");
+    const [submitNpc, setSubmitNpc] = useState("");
+    const [submitRegion, setSubmitRegion] = useState("");
     const [page, setPage] = useState(0);
     const [size, setSize] = useState(50);
     const [totalElements, setTotalElements] = useState(0);
@@ -127,7 +149,8 @@ export default function QuestList() {
         quest_name: true,
         npc_name: true,
         req_level: true,
-        reward_exp: true
+        reward_exp: true,
+        is_material_quest: true
     });
     const [showColumnMenu, setShowColumnMenu] = useState(false);
     const [listPanelPercent, setListPanelPercent] = useState(50);
@@ -165,8 +188,13 @@ export default function QuestList() {
     const loadFromApi = useCallback((pageNum = 0, pageSize = size) => {
         setLoading(true);
         setError(null);
-        const keyword = submitSearch.trim() || undefined;
-        const params = { page: pageNum, size: pageSize, keyword };
+        const params = {
+            page: pageNum,
+            size: pageSize,
+            keywordQuest: submitQuest.trim() || undefined,
+            keywordNpc: submitNpc.trim() || undefined,
+            keywordRegion: submitRegion.trim() || undefined
+        };
         if (sortBy) {
             params.sortBy = sortBy;
             params.sortOrder = sortOrder;
@@ -197,7 +225,7 @@ export default function QuestList() {
                 loadStaticCsv();
             })
             .finally(() => setLoading(false));
-    }, [submitSearch, size, sortBy, sortOrder, loadStaticCsv]);
+    }, [submitQuest, submitNpc, submitRegion, size, sortBy, sortOrder, loadStaticCsv]);
 
     useEffect(() => {
         if (isChronoStoryWorld) {
@@ -206,7 +234,7 @@ export default function QuestList() {
             setLoading(false);
             setSelectedQuest(null);
         }
-    }, [isChronoStoryWorld, page, submitSearch, size, sortBy, sortOrder, loadFromApi]);
+    }, [isChronoStoryWorld, page, submitQuest, submitNpc, submitRegion, size, sortBy, sortOrder, loadFromApi]);
 
     /** 목록/상세 패널 비율 드래그 리사이즈 */
     useEffect(() => {
@@ -331,7 +359,8 @@ export default function QuestList() {
         { key: "quest_name", label: "퀘스트명(영문)", style: { minWidth: "140px" } },
         { key: "npc_name", label: "NPC", style: { minWidth: "100px" } },
         { key: "req_level", label: "요구레벨", style: { width: "70px", textAlign: "center" } },
-        { key: "reward_exp", label: "경험치", style: { width: "90px", textAlign: "right" } }
+        { key: "reward_exp", label: "경험치", style: { width: "90px", textAlign: "right" } },
+        { key: "is_material_quest", label: "요구아이템", style: { width: "100px", textAlign: "center" } }
     ], []);
 
     /** 상세에 표시할 라벨 매핑 (snake_case → 한글) */
@@ -339,22 +368,19 @@ export default function QuestList() {
         quest_id: "퀘스트 ID",
         quest_name: "퀘스트명",
         quest_name_kr: "퀘스트명(한글)",
-        region: "지역",
-        region_name: "지역명",
+        region_name: "지역",
+        region: "대륙",
         npc_id: "제공자 NPC ID",
         npc_name: "퀘스트 제공자",
         parent_name: "상위명",
         quest_order: "순서",
         sort_order: "정렬",
-        prereq_quest_1: "선행 퀘스트 1",
-        prereq_quest_name_1: "선행 퀘스트명 1",
-        prereq_quest_2: "선행 퀘스트 2",
-        prereq_quest_name_2: "선행 퀘스트명 2",
+        prereq_quest_1: "선행 퀘스트 ID 1번째",
+        prereq_quest_name_1: "선행 퀘스트명 1번째",
+        prereq_quest_2: "선행 퀘스트 ID 2번째",
+        prereq_quest_name_2: "선행 퀘스트명 2번째",
         req_level: "요구 레벨",
         req_jobs: "요구 직업",
-        give_item_1: "지급 아이템 1",
-        give_item_name_1: "지급 아이템명 1",
-        give_item_count_1: "지급 개수 1",
         req_npc: "요구 NPC",
         req_npc_name: "요구 NPC명",
         req_mesos: "요구 메소",
@@ -462,18 +488,44 @@ export default function QuestList() {
                     </div>
                     {isChronoStoryWorld && (
                         <form
-                            onSubmit={(e) => { e.preventDefault(); setSubmitSearch(search); setPage(0); }}
+                            onSubmit={(e) => {
+                                e.preventDefault();
+                                setSubmitQuest(searchQuest);
+                                setSubmitNpc(searchNpc);
+                                setSubmitRegion(searchRegion);
+                                setPage(0);
+                            }}
                             style={{ display: "flex", flexDirection: "column", gap: "12px", marginBottom: "12px" }}
                         >
-                            <div style={{ display: "flex", gap: "12px", alignItems: "center", flexWrap: "wrap" }}>
+                            <div style={{ display: "flex", flexWrap: "wrap", gap: "12px", alignItems: "center" }}>
                                 <label style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "14px" }}>
-                                    검색
+                                    퀘스트명
                                     <input
                                         type="text"
-                                        placeholder="퀘스트명, 지역, NPC 등"
-                                        value={search}
-                                        onChange={(e) => setSearch(e.target.value)}
-                                        style={{ padding: "6px 8px", borderRadius: "6px", border: "1px solid var(--app-border)", minWidth: "160px" }}
+                                        placeholder="퀘스트명"
+                                        value={searchQuest}
+                                        onChange={(e) => setSearchQuest(e.target.value)}
+                                        style={{ padding: "6px 8px", borderRadius: "6px", border: "1px solid var(--app-border)", minWidth: "120px" }}
+                                    />
+                                </label>
+                                <label style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "14px" }}>
+                                    NPC
+                                    <input
+                                        type="text"
+                                        placeholder="NPC명·ID"
+                                        value={searchNpc}
+                                        onChange={(e) => setSearchNpc(e.target.value)}
+                                        style={{ padding: "6px 8px", borderRadius: "6px", border: "1px solid var(--app-border)", minWidth: "120px" }}
+                                    />
+                                </label>
+                                <label style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "14px" }}>
+                                    대륙·지역
+                                    <input
+                                        type="text"
+                                        placeholder="대륙·지역"
+                                        value={searchRegion}
+                                        onChange={(e) => setSearchRegion(e.target.value)}
+                                        style={{ padding: "6px 8px", borderRadius: "6px", border: "1px solid var(--app-border)", minWidth: "120px" }}
                                     />
                                 </label>
                                 <button type="submit" className="map-btn map-btn-primary">
@@ -508,13 +560,17 @@ export default function QuestList() {
                     )}
                     {isChronoStoryWorld && !loading && (source === "api" || source === "csv") && questItems.length === 0 && (
                         <div className="map-empty">
-                            {submitSearch.trim() ? "검색 결과가 없습니다." : "퀘스트 데이터가 없습니다."}
+                            {(submitQuest.trim() || submitNpc.trim() || submitRegion.trim()) ? "검색 결과가 없습니다." : "퀘스트 데이터가 없습니다."}
                         </div>
                     )}
                     {isChronoStoryWorld && !loading && (source === "api" || source === "csv") && questItems.length > 0 && (
                         <>
                         <div className="map-list-and-pagination">
-                        <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", marginBottom: "6px", minHeight: "32px" }}>
+                        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "6px", minHeight: "32px", flexWrap: "wrap", gap: "8px" }}>
+                            <p style={{ fontSize: "12px", color: "var(--app-muted-text-color)", margin: 0, display: "flex", alignItems: "center", gap: "8px" }}>
+                                <span className="quest-prereq-swatch" style={{ display: "inline-block", width: "20px", height: "14px", borderRadius: "4px", flexShrink: 0 }} aria-hidden />
+                                <span>음영 처리된 행은 선행 퀘스트가 있는 퀘스트입니다.</span>
+                            </p>
                             <div style={{ position: "relative" }}>
                                 <button
                                     type="button"
@@ -612,6 +668,7 @@ export default function QuestList() {
                                     {questItems.map((item, index) => {
                                         const key = getQuestKey(item, index);
                                         const isSelected = selectedQuest && getQuestKey(selectedQuest, -1) === key;
+                                        const hasPrereq = hasPrereqQuest(item);
                                         const cellByKey = {
                                             quest_name_kr: String(item.quest_name_kr ?? item.questNameKr ?? "").trim() || "-",
                                             quest_name: String(item.quest_name ?? item.questName ?? item.QuestName ?? item.QuestID ?? "").trim() || "-",
@@ -620,18 +677,21 @@ export default function QuestList() {
                                             reward_exp: (() => {
                                                 const exp = item.reward_exp ?? item.rewardExp ?? "";
                                                 return exp !== "" && exp != null && exp !== undefined ? Number(exp).toLocaleString() : "-";
-                                            })()
+                                            })(),
+                                            is_material_quest: isMaterialQuest(item) ? "Y" : "N"
                                         };
                                         const tdStyleByKey = {
                                             quest_name_kr: { fontWeight: 600 },
                                             quest_name: { fontSize: "12px", color: "var(--app-muted-text-color)" },
                                             npc_name: {},
                                             req_level: { textAlign: "center" },
-                                            reward_exp: { textAlign: "right", fontWeight: 600 }
+                                            reward_exp: { textAlign: "right", fontWeight: 600 },
+                                            is_material_quest: { textAlign: "center" }
                                         };
                                         return (
                                             <tr
                                                 key={key}
+                                                className={hasPrereq ? "quest-list-row-prereq" : undefined}
                                                 onClick={() => setSelectedQuest(item)}
                                                 role="button"
                                                 tabIndex={0}
@@ -730,21 +790,15 @@ export default function QuestList() {
                                         const label = detailLabelMap[k] ?? k;
                                         let val;
                                         if (k === "region") {
-                                            const first = npcLocationMaps[0];
-                                            if (!first) val = "";
-                                            else {
-                                                const kr = first.town_name_kr ?? first.townNameKr ?? "";
-                                                const en = first.town_name_en ?? first.townNameEn ?? "";
-                                                val = kr && en ? `${kr} (${en})` : (kr || en || "");
-                                            }
+                                            // 지역 라벨에는 대륙 값: region_name_kr(region_name) 한글(영문)
+                                            const kr = selectedQuest.region_name_kr ?? selectedQuest.regionNameKr ?? "";
+                                            const en = selectedQuest.region_name ?? selectedQuest.regionName ?? "";
+                                            val = (kr || en) ? (kr && en ? `${kr} (${en})` : (kr || en)) : (selectedQuest.region ?? "");
                                         } else if (k === "region_name") {
-                                            const first = npcLocationMaps[0];
-                                            if (!first) val = "";
-                                            else {
-                                                const kr = first.map_name_kr ?? first.mapNameKr ?? "";
-                                                const en = first.map_name_en ?? first.mapNameEn ?? "";
-                                                val = kr && en ? `${kr} (${en})` : (kr || en || "");
-                                            }
+                                            // 대륙 라벨에는 지역 값: map_name_kr(map_name_en) 한글(영문)
+                                            const kr = selectedQuest.map_name_kr ?? selectedQuest.mapNameKr ?? "";
+                                            const en = selectedQuest.map_name_en ?? selectedQuest.mapNameEn ?? "";
+                                            val = (kr || en) ? (kr && en ? `${kr} (${en})` : (kr || en)) : (selectedQuest.region_name ?? "");
                                         } else {
                                             val = selectedQuest[k] ?? selectedQuest[k.replace(/_/g, "")] ?? "";
                                         }
@@ -774,66 +828,69 @@ export default function QuestList() {
                             </div>
                             <div className="map-section">
                                 <h4>요구 조건 (아이템/몹/메소)</h4>
-                                {[1, 2, 3, 4].filter((i) => {
-                                    const id = selectedQuest[`req_item_${i}`] ?? selectedQuest[`reqItem${i}`] ?? "";
-                                    return id != null && String(id).trim() !== "";
-                                }).length > 0 && (
-                                    <div style={{ marginBottom: "16px" }}>
-                                        <div style={{ fontSize: "12px", color: "var(--app-muted-text-color)", marginBottom: "8px", fontWeight: 600 }}>요구 아이템</div>
-                                        {[1, 2, 3, 4].map((i) => {
-                                            const id = selectedQuest[`req_item_${i}`] ?? selectedQuest[`reqItem${i}`] ?? "";
-                                            const name = selectedQuest[`req_item_name_${i}`] ?? selectedQuest[`reqItemName${i}`] ?? "";
-                                            const count = selectedQuest[`req_item_count_${i}`] ?? selectedQuest[`reqItemCount${i}`] ?? "";
-                                            if (!id || String(id).trim() === "") return null;
-                                            const itemId = String(id).trim();
-                                            const imgUrl = getItemImageUrl(itemId);
-                                            const drops = itemDropsCache[itemId];
-                                            const dropLabels = Array.isArray(drops)
-                                                ? drops.map((d) => d.mob_name_kr ?? d.mob_name_en ?? d.mobNameKr ?? d.mobNameEn ?? d.mob_id ?? "").filter(Boolean)
-                                                : [];
-                                            const acquisitionText = drops === null || drops === undefined
-                                                ? "조회 중…"
-                                                : (dropLabels.length > 0 ? `드랍: ${dropLabels.join(", ")}` : "드랍 정보 없음");
-                                            return (
-                                                <div
-                                                    key={`req-item-${i}`}
-                                                    role="button"
-                                                    tabIndex={0}
-                                                    onClick={() => setItemPopup({ itemId, itemName: name || "" })}
-                                                    onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setItemPopup({ itemId, itemName: name || "" }); } }}
-                                                    style={{
-                                                        display: "flex",
-                                                        alignItems: "flex-start",
-                                                        gap: "12px",
-                                                        padding: "10px 12px",
-                                                        background: "var(--app-bg-secondary, rgba(0,0,0,0.04))",
-                                                        borderRadius: "8px",
-                                                        marginBottom: "8px",
-                                                        border: "1px solid var(--app-border, rgba(0,0,0,0.08))",
-                                                        cursor: "pointer"
-                                                    }}
-                                                >
-                                                    {imgUrl && (
-                                                        <img
-                                                            src={imgUrl}
-                                                            alt={name || itemId}
-                                                            style={{ width: 40, height: 40, objectFit: "contain", flexShrink: 0, background: "var(--app-bg-tertiary, #f0f0f0)", borderRadius: "6px" }}
-                                                            onError={(e) => { e.target.style.display = "none"; }}
-                                                        />
-                                                    )}
-                                                    <div style={{ flex: 1, minWidth: 0 }}>
-                                                        <div style={{ fontWeight: 600, fontSize: "14px" }}>
-                                                            {name ? `${name} x ${count || "?"}` : `아이템 ID ${itemId} x ${count || "?"}`}
-                                                        </div>
-                                                        <div style={{ fontSize: "12px", color: "var(--app-muted-text-color)", marginTop: "4px" }}>
-                                                            <span style={{ fontWeight: 600 }}>획득처</span>: {acquisitionText}
+                                {(() => {
+                                    // 요구 아이템: req_item_1~4 (id, name, count 포함)
+                                    const allReqItems = [1, 2, 3, 4].map((i) => ({
+                                        id: selectedQuest[`req_item_${i}`] ?? selectedQuest[`reqItem${i}`] ?? "",
+                                        name: selectedQuest[`req_item_name_${i}`] ?? selectedQuest[`reqItemName${i}`] ?? "",
+                                        count: selectedQuest[`req_item_count_${i}`] ?? selectedQuest[`reqItemCount${i}`] ?? "",
+                                        key: `req-${i}`
+                                    })).filter((s) => s.id != null && String(s.id).trim() !== "");
+                                    if (allReqItems.length === 0) return null;
+                                    return (
+                                        <div style={{ marginBottom: "16px" }}>
+                                            <div style={{ fontSize: "12px", color: "var(--app-muted-text-color)", marginBottom: "8px", fontWeight: 600 }}>요구 아이템</div>
+                                            {allReqItems.map((slot) => {
+                                                const itemId = String(slot.id).trim();
+                                                const imgUrl = getItemImageUrl(itemId);
+                                                const drops = itemDropsCache[itemId];
+                                                const dropLabels = Array.isArray(drops)
+                                                    ? drops.map((d) => d.mob_name_kr ?? d.mob_name_en ?? d.mobNameKr ?? d.mobNameEn ?? d.mob_id ?? "").filter(Boolean)
+                                                    : [];
+                                                const acquisitionText = drops === null || drops === undefined
+                                                    ? "조회 중…"
+                                                    : (dropLabels.length > 0 ? `드랍: ${dropLabels.join(", ")}` : "드랍 정보 없음");
+                                                return (
+                                                    <div
+                                                        key={slot.key}
+                                                        role="button"
+                                                        tabIndex={0}
+                                                        onClick={() => setItemPopup({ itemId, itemName: slot.name || "" })}
+                                                        onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setItemPopup({ itemId, itemName: slot.name || "" }); } }}
+                                                        style={{
+                                                            display: "flex",
+                                                            alignItems: "flex-start",
+                                                            gap: "12px",
+                                                            padding: "10px 12px",
+                                                            background: "var(--app-bg-secondary, rgba(0,0,0,0.04))",
+                                                            borderRadius: "8px",
+                                                            marginBottom: "8px",
+                                                            border: "1px solid var(--app-border, rgba(0,0,0,0.08))",
+                                                            cursor: "pointer"
+                                                        }}
+                                                    >
+                                                        {imgUrl && (
+                                                            <img
+                                                                src={imgUrl}
+                                                                alt={slot.name || itemId}
+                                                                style={{ width: 40, height: 40, objectFit: "contain", flexShrink: 0, background: "var(--app-bg-tertiary, #f0f0f0)", borderRadius: "6px" }}
+                                                                onError={(e) => { e.target.style.display = "none"; }}
+                                                            />
+                                                        )}
+                                                        <div style={{ flex: 1, minWidth: 0 }}>
+                                                            <div style={{ fontWeight: 600, fontSize: "14px" }}>
+                                                                {slot.name ? `${slot.name} x ${slot.count || "?"}` : `아이템 ID ${itemId} x ${slot.count || "?"}`}
+                                                            </div>
+                                                            <div style={{ fontSize: "12px", color: "var(--app-muted-text-color)", marginTop: "4px" }}>
+                                                                <span style={{ fontWeight: 600 }}>획득처</span>: {acquisitionText}
+                                                            </div>
                                                         </div>
                                                     </div>
-                                                </div>
-                                            );
-                                        })}
-                                    </div>
-                                )}
+                                                );
+                                            })}
+                                        </div>
+                                    );
+                                })()}
                                 {(() => {
                                     const reqNpcId = selectedQuest.req_npc ?? selectedQuest.reqNpc ?? "";
                                     const reqNpcName = selectedQuest.req_npc_name ?? selectedQuest.reqNpcName ?? "";
@@ -871,7 +928,7 @@ export default function QuestList() {
                                     );
                                 })()}
                                 <div className="map-info-grid">
-                                    {["give_item_1", "give_item_name_1", "give_item_count_1", "req_mesos",
+                                    {["req_mesos",
                                         "req_mob_1", "req_mob_name_1", "req_mob_count_1", "req_mob_2", "req_mob_name_2", "req_mob_count_2"
                                     ].map((k) => {
                                         const label = detailLabelMap[k] ?? k;
@@ -1072,21 +1129,21 @@ export default function QuestList() {
                                     return (
                                         <div style={{ marginBottom: "16px" }}>
                                             <div style={{ fontSize: "12px", color: "var(--app-muted-text-color)", marginBottom: "8px", fontWeight: 600 }}>보상 경험치 · 메소 · 명성</div>
-                                            <div style={boxStyle}>
+                                            <div className="quest-detail-reward-box" style={boxStyle}>
                                                 {hasExp && (
-                                                    <span style={chipStyle}>
+                                                    <span className="quest-detail-reward-chip" style={chipStyle}>
                                                         <span style={{ color: "var(--app-muted-text-color)", fontWeight: 500, fontSize: "12px" }}>경험치</span>
                                                         {Number(exp).toLocaleString()}
                                                     </span>
                                                 )}
                                                 {hasMesos && (
-                                                    <span style={chipStyle}>
+                                                    <span className="quest-detail-reward-chip" style={chipStyle}>
                                                         <span style={{ color: "var(--app-muted-text-color)", fontWeight: 500, fontSize: "12px" }}>메소</span>
                                                         {Number(mesos).toLocaleString()}
                                                     </span>
                                                 )}
                                                 {hasFame && (
-                                                    <span style={chipStyle}>
+                                                    <span className="quest-detail-reward-chip" style={chipStyle}>
                                                         <span style={{ color: "var(--app-muted-text-color)", fontWeight: 500, fontSize: "12px" }}>명성</span>
                                                         {Number(fame).toLocaleString()}
                                                     </span>
