@@ -18,10 +18,24 @@ export const API_ORIGIN =
  * - 없으면 접속한 주소(window.location.origin) 사용.
  */
 let _staticOriginOverride = null;
+let _configFetchStarted = false;
 
-/** 같은 망일 때 서버가 알려준 정적 주소 설정 (main에서 /api/config 응답으로 호출) */
+/** 같은 망일 때 서버가 알려준 정적 주소 설정 (main 또는 lazy fetch에서 설정) */
 export function setStaticOriginOverride(url) {
     _staticOriginOverride = (url && String(url).trim()) ? String(url).trim().replace(/\/+$/, "") : null;
+}
+
+/** /api/config 한 번만 호출해 staticOrigin 적용 (이미지 등 필요할 때만 호출되도록) */
+function ensureConfigFetchedOnce() {
+    if (_configFetchStarted || typeof window === "undefined") return;
+    _configFetchStarted = true;
+    fetch("/api/config", { cache: "no-store" })
+        .then((r) => r.ok ? r.json() : null)
+        .then((d) => {
+            const origin = d?.data?.staticOrigin ?? d?.staticOrigin;
+            if (origin && String(origin).trim()) setStaticOriginOverride(origin);
+        })
+        .catch(() => {});
 }
 
 function getStaticOrigin() {
@@ -30,6 +44,7 @@ function getStaticOrigin() {
         return import.meta.env.VITE_STATIC_ORIGIN.replace(/\/$/, "");
     }
     if (typeof window !== "undefined" && window.location?.origin) {
+        ensureConfigFetchedOnce();
         return window.location.origin.replace(/\/$/, "");
     }
     return API_ORIGIN;
