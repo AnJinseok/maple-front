@@ -84,7 +84,22 @@ export default function SideMenu({ isOpen, onToggle }) {
                             to="/quests"
                             className={({ isActive }) => (isActive ? "active" : "")}
                         >
-                            퀘스트
+                            <span style={{ display: "inline-flex", alignItems: "center", gap: "6px", flexWrap: "wrap" }}>
+                                퀘스트
+                                <span
+                                    className="side-menu-dev-badge side-menu-done-badge"
+                                    style={{
+                                        fontSize: "10px",
+                                        fontWeight: 600,
+                                        padding: "2px 6px",
+                                        borderRadius: "999px",
+                                        background: "var(--done-badge-bg, #5cb85c)",
+                                        color: "var(--done-badge-fg, #fff)"
+                                    }}
+                                >
+                                    개발 완료
+                                </span>
+                            </span>
                         </NavLink>
                     </li>
                     {/* 크로노스토리 선택 시에만 표시 */}
