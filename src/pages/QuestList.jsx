@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { useWorld } from "../contexts/WorldContext";
+import { WORLD_SUGGESTIONS } from "../constants/worldOptions";
 import { fetchChronostoryItemDetail, fetchChronostoryItemDrops, fetchChronostoryNpcDetail, fetchChronostoryQuests, getItemImageUrl, getMonsterImageUrl, getNpcImageUrl, getNpcImageUrlByFilePath } from "../api/mapleApi";
 
 const CSV_PATH = "/data/QuestDatabase.csv";
@@ -122,8 +124,17 @@ function hasPrereqQuest(item) {
  * - 맵 리스트와 동일한 레이아웃: 좌측 목록 + 우측 상세
  */
 export default function QuestList() {
-    const { world } = useWorld();
+    const [searchParams] = useSearchParams();
+    const { world, setWorld } = useWorld();
     const isChronoStoryWorld = world === "크로노스토리";
+
+    /** URL의 world 쿼리와 동기화: 크로노스토리/메이플랜드 섹션에서 진입 시 선택 월드 반영 */
+    useEffect(() => {
+        const worldParam = searchParams.get("world");
+        if (worldParam && Array.isArray(WORLD_SUGGESTIONS) && WORLD_SUGGESTIONS.includes(worldParam)) {
+            setWorld(worldParam);
+        }
+    }, [searchParams, setWorld]);
 
     const [source, setSource] = useState(null); // "api" | "csv" | null
     const [apiItems, setApiItems] = useState(null);
@@ -467,7 +478,11 @@ export default function QuestList() {
                     </>
                 ) : (
                     <>
-                        <p className="map-subtitle">퀘스트는 크로노스토리 월드에서만 이용할 수 있습니다.</p>
+                        <p className="map-subtitle">
+                            {world === "메이플랜드"
+                                ? "메이플랜드 퀘스트는 준비 중입니다."
+                                : "퀘스트는 크로노스토리 월드에서만 이용할 수 있습니다."}
+                        </p>
                         <p className="map-subtitle">선택된 월드: <b>{world}</b></p>
                     </>
                 )}
@@ -547,7 +562,11 @@ export default function QuestList() {
                         </form>
                     )}
                     {!isChronoStoryWorld && (
-                        <div className="map-empty">크로노스토리 월드에서만 퀘스트를 이용할 수 있습니다.</div>
+                        <div className="map-empty">
+                            {world === "메이플랜드"
+                                ? "메이플랜드 퀘스트는 준비 중입니다."
+                                : "크로노스토리 월드에서만 퀘스트를 이용할 수 있습니다."}
+                        </div>
                     )}
                     {isChronoStoryWorld && loading && <div className="map-empty">퀘스트 데이터 로딩 중...</div>}
                     {isChronoStoryWorld && !loading && error && !csvText && !apiItems?.length && (

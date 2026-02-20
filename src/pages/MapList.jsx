@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { useWorld } from "../contexts/WorldContext";
+import { WORLD_SUGGESTIONS } from "../constants/worldOptions";
 import {
     fetchChronostoryMapBundle,
     fetchChronostoryMaps,
@@ -25,12 +27,21 @@ import {
  * - 출력: JSX(Element)
  */
 export default function MapList() {
-    const { world } = useWorld();
+    const [searchParams] = useSearchParams();
+    const { world, setWorld } = useWorld();
 
     // 조건문: 지원 월드(게임) 여부 판별
     const isChronoStoryWorld = world === "크로노스토리";
     const isMapleLandWorld = world === "메이플랜드";
     const isSupportedWorld = isChronoStoryWorld || isMapleLandWorld;
+
+    /** URL의 world 쿼리와 동기화: 크로노스토리/메이플랜드 섹션에서 진입 시 선택 월드 반영 */
+    useEffect(() => {
+        const worldParam = searchParams.get("world");
+        if (worldParam && Array.isArray(WORLD_SUGGESTIONS) && WORLD_SUGGESTIONS.includes(worldParam)) {
+            setWorld(worldParam);
+        }
+    }, [searchParams, setWorld]);
 
     // 검색 입력(타이핑 중)
     const [keywordInput, setKeywordInput] = useState("");
@@ -1262,7 +1273,7 @@ export default function MapList() {
             {/* 조건문: 지원하지 않는 월드면 안내만 표시 */}
             {!isSupportedWorld && (
                 <div className="map-notice">
-                    현재 월드에서는 준비중입니다. 상단 월드를 <b>메이플랜드</b> 또는 <b>크로노스토리</b>로 선택해주세요.
+                    현재 월드에서는 준비중입니다. 사이드바 메이플 그룹에서 월드를 <b>메이플랜드</b> 또는 <b>크로노스토리</b>로 선택해주세요.
                 </div>
             )}
 

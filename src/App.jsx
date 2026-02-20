@@ -9,6 +9,8 @@ import RandomEquipmentStats from "./pages/RandomEquipmentStats";
 import MapList from "./pages/MapList";
 import MonsterList from "./pages/MonsterList";
 import QuestList from "./pages/QuestList";
+import BigAmbitionsSaveEditor from "./pages/BigAmbitionsSaveEditor";
+import Notice from "./pages/Notice";
 import { WorldProvider } from "./contexts/WorldContext";
 import { DisplayProvider } from "./contexts/DisplayContext";
 
@@ -25,6 +27,7 @@ export default function App() {
                     <MainLayout>
                         <Routes>
                             <Route path="/" element={<Home />} />
+                            <Route path="/notice" element={<Notice />} />
                             <Route path="/items" element={<ItemList />} />
                             <Route path="/shout" element={<ShoutList />} />
                             {/* 아이템 능력치 장착 화면 라우트 */}
@@ -39,6 +42,8 @@ export default function App() {
                             <Route path="/monsters" element={<MonsterList />} />
                             {/* 크로노스토리 퀘스트 DB */}
                             <Route path="/quests" element={<QuestList />} />
+                            {/* Big Ambitions .hsg 세이브 에디터 */}
+                            <Route path="/big-ambitions-editor" element={<BigAmbitionsSaveEditor />} />
                         </Routes>
                     </MainLayout>
                 </BrowserRouter>

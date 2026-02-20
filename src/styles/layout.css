@@ -92,6 +92,46 @@ html[data-theme="dark"] .side-menu a:visited {
     -webkit-text-fill-color: #ffffff !important;
 }
 
+/* 다크 모드: 사이드 메뉴 그룹 제목은 약간 흐리게 구분 */
+html[data-theme="dark"] .side-menu-group-title,
+html[data-theme="dark"] .side-menu-group-toggle {
+    color: rgba(255, 255, 255, 0.65) !important;
+    -webkit-text-fill-color: rgba(255, 255, 255, 0.65) !important;
+}
+html[data-theme="dark"] .side-menu-group-toggle:hover {
+    color: #ffffff !important;
+    -webkit-text-fill-color: #ffffff !important;
+}
+html[data-theme="dark"] .side-menu-group-world {
+    color: rgba(255, 255, 255, 0.6) !important;
+    -webkit-text-fill-color: rgba(255, 255, 255, 0.6) !important;
+}
+html[data-theme="dark"] .side-menu-world-section-title,
+html[data-theme="dark"] .side-menu-world-section-toggle {
+    color: rgba(255, 255, 255, 0.6) !important;
+    -webkit-text-fill-color: rgba(255, 255, 255, 0.6) !important;
+}
+html[data-theme="dark"] .side-menu-world-section-toggle:hover {
+    color: #ffffff !important;
+    -webkit-text-fill-color: #ffffff !important;
+}
+html[data-theme="dark"] .side-menu-world-section {
+    border-left-color: rgba(255, 255, 255, 0.15);
+}
+
+/* 다크 모드: 사이드 메뉴 전체 열기/닫기 버튼 */
+html[data-theme="dark"] .side-menu-action-btn {
+    color: rgba(255, 255, 255, 0.7) !important;
+    -webkit-text-fill-color: rgba(255, 255, 255, 0.7) !important;
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(255, 255, 255, 0.12);
+}
+html[data-theme="dark"] .side-menu-action-btn:hover {
+    color: #ffffff !important;
+    -webkit-text-fill-color: #ffffff !important;
+    background: rgba(255, 255, 255, 0.12);
+}
+
 /* 다크 모드: /maps 검색 결과 리스트(왼쪽 리스트) 글자 흰색 고정 */
 html[data-theme="dark"] .map-list,
 html[data-theme="dark"] .map-list * {
@@ -133,7 +173,6 @@ html[data-theme="dark"] .logo a:hover {
     color: #ffffff !important;
     -webkit-text-fill-color: #ffffff !important;
 }
-
 html[data-theme="dark"] .world-select-input option,
 html[data-theme="dark"] .map-search-select option {
     color: #ffffff !important;
@@ -192,9 +231,9 @@ body {
 
 /* 사이드 열림: 사이드바 고정폭, 본문이 남은 폭 전부 사용(겹침 없음) */
 .main-container.sidebar-open .side-menu {
-    flex: 0 0 250px;
-    width: 250px;
-    min-width: 250px;
+    flex: 0 0 320px;
+    width: 320px;
+    min-width: 320px;
 }
 
 .main-container.sidebar-open .content {
@@ -323,10 +362,26 @@ html[data-theme="dark"] .theme-toggle-btn:hover {
 
 
 .logo a {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 6px;
     font-size: 18px;
     font-weight: bold;
     color: var(--app-logo-color);
     text-decoration: none;
+}
+.logo-brand {
+    /* Util 메인 */
+}
+.logo-tagline {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--app-muted-text-color, #64748b);
+    -webkit-text-fill-color: inherit;
+}
+html[data-theme="dark"] .logo-tagline {
+    color: rgba(255, 255, 255, 0.7) !important;
+    -webkit-text-fill-color: rgba(255, 255, 255, 0.7) !important;
 }
 
 .nav a {
@@ -400,6 +455,10 @@ html[data-theme="dark"] .theme-toggle-btn:hover {
     margin: 0;
     color: var(--app-muted-text-color);
     font-size: 13px;
+}
+/* 홈 등: 마침표 기준 문장별 줄바꿈 시 문장 사이 간격 */
+.map-subtitle-sentences .map-subtitle + .map-subtitle {
+    margin-top: 6px;
 }
 
 .map-notice {
@@ -1534,6 +1593,190 @@ html[data-theme="dark"] .map-btn-primary:hover:not(:disabled) {
     font-weight: bold;
 }
 
+/* 사이드 메뉴: 전체 열기/닫기 / 현재 메뉴만 버튼 */
+.side-menu-group-actions {
+    display: flex;
+    flex-wrap: nowrap;
+    gap: 6px;
+    margin-bottom: 14px;
+}
+.side-menu-action-btn {
+    flex: 1 1 0;
+    min-width: 0;
+    padding: 6px 6px;
+    font-size: 10px;
+    font-weight: 600;
+    line-height: 1.4;
+    color: var(--app-muted-text-color, #64748b);
+    background: var(--app-bg-secondary, rgba(0, 0, 0, 0.04));
+    border: 1px solid var(--app-border, rgba(0, 0, 0, 0.08));
+    border-radius: 4px;
+    cursor: pointer;
+    -webkit-text-fill-color: inherit;
+    text-align: center;
+    /* 버튼은 한 행 유지, 안쪽 텍스트만 필요 시 두 줄로 줄바꿈 */
+    white-space: normal;
+    word-break: keep-all;
+}
+.side-menu-action-en {
+    display: block;
+    font-size: 9px;
+    font-weight: 500;
+    opacity: 0.9;
+    margin-top: 1px;
+}
+.side-menu-action-btn:hover {
+    color: var(--app-text-color);
+    background: var(--app-bg-tertiary, rgba(0, 0, 0, 0.06));
+    -webkit-text-fill-color: inherit;
+}
+
+/* 상단 홈 버튼 (그룹 없이 단일 링크) */
+.side-menu-home {
+    margin-bottom: 4px;
+}
+.side-menu-home .menu-list {
+    margin-bottom: 0;
+}
+.side-menu-home .menu-list li {
+    margin-bottom: 0;
+}
+
+/* 사이드 메뉴 그룹: 게임 에디터 / 메이플 구분 */
+.side-menu-group {
+    margin-top: 20px;
+}
+.side-menu-group:first-of-type {
+    margin-top: 0;
+}
+.side-menu-group-title {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--app-muted-text-color, #64748b);
+    margin-bottom: 8px;
+    padding: 0 12px;
+}
+
+/* 그룹 펼침/접힘 토글 버튼 */
+.side-menu-group-toggle {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    width: 100%;
+    text-align: left;
+    flex-wrap: wrap;
+    cursor: pointer;
+    border: none;
+    background: none;
+    font: inherit;
+    -webkit-text-fill-color: inherit;
+}
+.side-menu-group-toggle:hover {
+    color: var(--app-text-color);
+    -webkit-text-fill-color: inherit;
+}
+.side-menu-group-chevron {
+    font-size: 10px;
+    opacity: 0.85;
+    flex-shrink: 0;
+}
+.side-menu-group-title-text {
+    flex: 1 1 auto;
+    min-width: 0;
+}
+/* 그룹별 현재 월드 표시 (메이플 그룹 등) */
+.side-menu-group-world {
+    font-size: 10px;
+    font-weight: 500;
+    color: var(--app-muted-text-color, #64748b);
+    opacity: 0.95;
+    flex-shrink: 0;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+/* 그룹 밑 화면 이동 링크: 그룹 제목보다 조금 우측으로 */
+.side-menu-group .menu-list {
+    margin-bottom: 0;
+    padding-left: 12px;
+}
+.side-menu-group .menu-list li:last-child {
+    margin-bottom: 0;
+}
+
+/* 메이플 그룹 내 월드 선택: 사이드바 폭에 맞춤 */
+.side-menu-world-select {
+    margin-bottom: 12px;
+    padding: 0 12px;
+}
+.side-menu-world-select .world-select {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 4px;
+}
+.side-menu-world-select .world-select-label {
+    font-size: 11px;
+    font-weight: 600;
+}
+.side-menu-world-select .world-select-input {
+    width: 100%;
+    min-width: 0;
+    height: 32px;
+    padding: 0 8px;
+    font-size: 13px;
+}
+
+/* 메이플 그룹 내 월드별 섹션: 크로노스토리 / 메이플랜드 */
+/* 하위 그룹(월드 섹션): 상위 그룹보다 오른쪽으로 들여쓰기 */
+.side-menu-world-section {
+    margin-top: 14px;
+    padding-left: 16px;
+    border-left: 2px solid var(--app-border, rgba(0, 0, 0, 0.08));
+}
+.side-menu-world-section:first-of-type {
+    margin-top: 0;
+}
+.side-menu-world-section-title {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--app-muted-text-color, #64748b);
+    margin-bottom: 6px;
+    padding: 0 12px 0 8px;
+}
+/* 월드 섹션(크로노스토리/메이플랜드) 펼침·접힘 토글 */
+.side-menu-world-section-toggle {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    width: 100%;
+    text-align: left;
+    cursor: pointer;
+    border: none;
+    background: none;
+    font: inherit;
+    margin-bottom: 6px;
+    padding: 0 12px;
+    -webkit-text-fill-color: inherit;
+}
+.side-menu-world-section-toggle:hover {
+    color: var(--app-text-color);
+    -webkit-text-fill-color: inherit;
+}
+.side-menu-world-section .menu-list {
+    margin-bottom: 0;
+    padding-left: 10px;
+}
+.side-menu-world-section .menu-list li {
+    margin-bottom: 8px;
+}
+.side-menu-world-section .menu-list li:last-child {
+    margin-bottom: 0;
+}
+
 /* =========================================================
    5. Home Page
 ========================================================= */
@@ -1549,6 +1792,18 @@ html[data-theme="dark"] .map-btn-primary:hover:not(:disabled) {
 .home-header p {
     font-size: 14px;
     color: #666;
+}
+
+/* 홈 상단: 게임 에디터 / 메이플 박스 (2열) */
+.home-category-boxes {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+    margin-bottom: 24px;
+    max-width: 100%;
+}
+.home-category-boxes .home-card-category {
+    min-height: 80px;
 }
 
 .home-cards {

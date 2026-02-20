@@ -17,11 +17,31 @@ export default function Home() {
         ...(isChronoStory ? [{ to: "/random-equipment-stats", label: "랜덤 장비 스탯", desc: "장비 랜덤 스탯 범위·시뮬레이션" }] : []),
     ];
 
+    /** description 문자열을 마침표(.) 기준으로 나눠 문장별 블록으로 렌더링 */
+    const descriptionText = "메이플 데이터 기반 정보 플랫폼입니다. 아래 메뉴에서 원하는 항목을 선택하세요.";
+    const sentences = descriptionText.split(/\.\s+/).filter(Boolean).map((s) => (s.trim().endsWith(".") ? s.trim() : s.trim() + "."));
+
     return (
         <div className="map-page">
-            <div className="map-header">
+            <div className="map-header" style={{ maxWidth: "700px" }}>
                 <h2>홈</h2>
-                <p className="map-subtitle">메이플 데이터 기반 정보 플랫폼입니다. 아래 메뉴에서 원하는 항목을 선택하세요.</p>
+                <div className="map-subtitle-sentences">
+                    {sentences.map((sentence, i) => (
+                        <p key={i} className="map-subtitle">{sentence}</p>
+                    ))}
+                </div>
+            </div>
+
+            {/* 게임 에디터 / 메이플 박스 */}
+            <div className="home-category-boxes">
+                <NavLink to="/big-ambitions-editor" className={({ isActive }) => `home-card home-card-category ${isActive ? "active" : ""}`}>
+                    <h3>게임 에디터</h3>
+                    <p>Game Editor</p>
+                </NavLink>
+                <NavLink to="/maps" className={({ isActive }) => `home-card home-card-category ${isActive ? "active" : ""}`}>
+                    <h3>메이플</h3>
+                    <p>Maple</p>
+                </NavLink>
             </div>
 
             <section className="map-card" style={{ maxWidth: "100%" }}>

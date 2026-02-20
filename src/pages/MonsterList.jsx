@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { useWorld } from "../contexts/WorldContext";
+import { WORLD_SUGGESTIONS } from "../constants/worldOptions";
 import {
     fetchChronostoryMonsters,
     fetchChronostoryMobDetail,
@@ -16,10 +18,19 @@ import {
  * 몬스터 전용 페이지: 검색 + 목록 + 상세(능력치·드롭 아이템)
  */
 export default function MonsterList() {
-    const { world } = useWorld();
+    const [searchParams] = useSearchParams();
+    const { world, setWorld } = useWorld();
     const isChronoStoryWorld = world === "크로노스토리";
     const isMapleLandWorld = world === "메이플랜드";
     const isSupportedWorld = isChronoStoryWorld || isMapleLandWorld;
+
+    /** URL의 world 쿼리와 동기화: 크로노스토리/메이플랜드 섹션에서 진입 시 선택 월드 반영 */
+    useEffect(() => {
+        const worldParam = searchParams.get("world");
+        if (worldParam && Array.isArray(WORLD_SUGGESTIONS) && WORLD_SUGGESTIONS.includes(worldParam)) {
+            setWorld(worldParam);
+        }
+    }, [searchParams, setWorld]);
 
     const [keywordInput, setKeywordInput] = useState("");
     const [keyword, setKeyword] = useState("");
@@ -278,7 +289,7 @@ export default function MonsterList() {
             <div className="map-page">
                 <div className="map-header">
                     <h2>몬스터</h2>
-                    <p className="map-subtitle">상단에서 월드를 <b>메이플랜드</b> 또는 <b>크로노스토리</b>로 선택해주세요.</p>
+                    <p className="map-subtitle">사이드바 메이플 그룹에서 월드를 <b>메이플랜드</b> 또는 <b>크로노스토리</b>로 선택해주세요.</p>
                 </div>
             </div>
         );
