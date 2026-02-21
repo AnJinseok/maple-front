@@ -264,6 +264,16 @@ export default function BigAmbitionsSaveEditor() {
                 {t.description}
             </p>
 
+            {/* 게임 세이브 기본 경로 안내 (문구로 표시) */}
+            <div style={{ marginBottom: "20px", padding: "10px 14px", background: "var(--app-bg-secondary, rgba(0,0,0,0.04))", borderRadius: "8px", border: "1px solid var(--app-border, rgba(0,0,0,0.08))" }}>
+                <div style={{ fontSize: "12px", fontWeight: 600, marginBottom: "6px", color: "var(--app-subtle-text-color)" }}>
+                    {t.savePathLabel}
+                </div>
+                <code style={{ fontSize: "11px", wordBreak: "break-all", display: "block", color: "var(--app-muted-text-color)" }}>
+                    {t.savePathValue}
+                </code>
+            </div>
+
             {/* 파일 선택: 버튼 문구는 선택 언어로 표시, 클릭 시 네이티브 파일 대화상자 열림 */}
             <div style={{ marginBottom: "16px" }}>
                 <label style={{ display: "block", fontSize: "12px", fontWeight: 600, marginBottom: "6px", color: "var(--app-subtle-text-color)" }}>

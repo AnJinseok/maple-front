@@ -42,7 +42,9 @@ export const BIG_AMBITIONS_SAVE_EDITOR_TRANSLATIONS = {
         msgReloaded: "값을 다시 읽었습니다.",
         msgDownloadStarted: "다운로드가 시작되었습니다. 게임을 끈 상태에서 파일을 교체하세요.",
         disclaimer: "비공식 팬 도구입니다. 게임 이용약관 및 해당 국가 법률을 확인한 후 사용할 책임은 사용자에게 있습니다.",
-        languageLabel: "설명 언어"
+        languageLabel: "설명 언어",
+        savePathLabel: "게임 세이브 기본 경로",
+        savePathValue: "C:\\Users\\<사용자명>\\AppData\\LocalLow\\Hovgaard Games\\Big Ambitions"
     },
     en: {
         title: "Big Ambitions Save Editor",
@@ -62,7 +64,9 @@ export const BIG_AMBITIONS_SAVE_EDITOR_TRANSLATIONS = {
         msgReloaded: "Values reloaded.",
         msgDownloadStarted: "Download started. Replace the file while the game is closed.",
         disclaimer: "Unofficial fan tool. You are responsible for use in accordance with the game's terms and applicable laws.",
-        languageLabel: "Language"
+        languageLabel: "Language",
+        savePathLabel: "Default save path",
+        savePathValue: "C:\\Users\\<YourUsername>\\AppData\\LocalLow\\Hovgaard Games\\Big Ambitions"
     },
     zh: {
         title: "Big Ambitions 存档编辑器",
@@ -82,7 +86,9 @@ export const BIG_AMBITIONS_SAVE_EDITOR_TRANSLATIONS = {
         msgReloaded: "已重新读取数值。",
         msgDownloadStarted: "已开始下载。请在关闭游戏后替换文件。",
         disclaimer: "非官方爱好者工具。请遵守游戏条款及当地法律，使用责任自负。",
-        languageLabel: "语言"
+        languageLabel: "语言",
+        savePathLabel: "默认存档路径",
+        savePathValue: "C:\\Users\\<用户名>\\AppData\\LocalLow\\Hovgaard Games\\Big Ambitions"
     },
     ja: {
         title: "Big Ambitions セーブエディター",
@@ -102,7 +108,9 @@ export const BIG_AMBITIONS_SAVE_EDITOR_TRANSLATIONS = {
         msgReloaded: "値を再読み込みしました。",
         msgDownloadStarted: "ダウンロードを開始しました。ゲームを終了した状態でファイルを差し替えてください。",
         disclaimer: "非公式ファンツールです。ゲームの利用規約および該当国の法令を確認した上で、使用責任は利用者にあります。",
-        languageLabel: "表示言語"
+        languageLabel: "表示言語",
+        savePathLabel: "セーブの保存場所",
+        savePathValue: "C:\\Users\\<ユーザー名>\\AppData\\LocalLow\\Hovgaard Games\\Big Ambitions"
     },
     th: {
         title: "Big Ambitions ตัวแก้เซฟ",
@@ -122,7 +130,9 @@ export const BIG_AMBITIONS_SAVE_EDITOR_TRANSLATIONS = {
         msgReloaded: "โหลดค่าคืนแล้ว",
         msgDownloadStarted: "เริ่มดาวน์โหลดแล้ว เปลี่ยนไฟล์ขณะปิดเกม",
         disclaimer: "เครื่องมือแฟนทำ ไม่เป็นทางการ ผู้ใช้รับผิดชอบการใช้งานตามข้อกำหนดของเกมและกฎหมายที่ใช้บังคับ",
-        languageLabel: "ภาษา"
+        languageLabel: "ภาษา",
+        savePathLabel: "เส้นทางบันทึกเกม",
+        savePathValue: "C:\\Users\\<ชื่อผู้ใช้>\\AppData\\LocalLow\\Hovgaard Games\\Big Ambitions"
     },
     fr: {
         title: "Éditeur de sauvegarde Big Ambitions",
@@ -142,7 +152,9 @@ export const BIG_AMBITIONS_SAVE_EDITOR_TRANSLATIONS = {
         msgReloaded: "Valeurs rechargées.",
         msgDownloadStarted: "Téléchargement démarré. Remplacez le fichier lorsque le jeu est fermé.",
         disclaimer: "Outil fan non officiel. Vous êtes responsable de l'utilisation conformément aux conditions du jeu et aux lois applicables.",
-        languageLabel: "Langue"
+        languageLabel: "Langue",
+        savePathLabel: "Emplacement des sauvegardes",
+        savePathValue: "C:\\Users\\<VotreNom>\\AppData\\LocalLow\\Hovgaard Games\\Big Ambitions"
     },
     de: {
         title: "Big Ambitions Speicher-Editor",
@@ -162,7 +174,9 @@ export const BIG_AMBITIONS_SAVE_EDITOR_TRANSLATIONS = {
         msgReloaded: "Werte neu geladen.",
         msgDownloadStarted: "Download gestartet. Ersetzen Sie die Datei, wenn das Spiel beendet ist.",
         disclaimer: "Inoffizielles Fan-Tool. Sie sind für die Nutzung gemäß den Spielbedingungen und geltenden Gesetzen verantwortlich.",
-        languageLabel: "Sprache"
+        languageLabel: "Sprache",
+        savePathLabel: "Speicherort der Spielstände",
+        savePathValue: "C:\\Users\\<Benutzername>\\AppData\\LocalLow\\Hovgaard Games\\Big Ambitions"
     },
     it: {
         title: "Editor salvataggio Big Ambitions",
@@ -182,7 +196,9 @@ export const BIG_AMBITIONS_SAVE_EDITOR_TRANSLATIONS = {
         msgReloaded: "Valori ricaricati.",
         msgDownloadStarted: "Download avviato. Sostituisci il file con il gioco chiuso.",
         disclaimer: "Strumento fan non ufficiale. Sei responsabile dell'uso in conformità con i termini del gioco e le leggi applicabili.",
-        languageLabel: "Lingua"
+        languageLabel: "Lingua",
+        savePathLabel: "Percorso salvataggi",
+        savePathValue: "C:\\Users\\<NomeUtente>\\AppData\\LocalLow\\Hovgaard Games\\Big Ambitions"
     },
     ru: {
         title: "Редактор сохранений Big Ambitions",
@@ -202,7 +218,9 @@ export const BIG_AMBITIONS_SAVE_EDITOR_TRANSLATIONS = {
         msgReloaded: "Значения перезагружены.",
         msgDownloadStarted: "Загрузка началась. Замените файл при закрытой игре.",
         disclaimer: "Неофициальный фанатский инструмент. Вы несёте ответственность за использование в соответствии с условиями игры и применимым законодательством.",
-        languageLabel: "Язык"
+        languageLabel: "Язык",
+        savePathLabel: "Путь к сохранениям",
+        savePathValue: "C:\\Users\\<ИмяПользователя>\\AppData\\LocalLow\\Hovgaard Games\\Big Ambitions"
     },
     es: {
         title: "Editor de guardado Big Ambitions",
@@ -222,7 +240,9 @@ export const BIG_AMBITIONS_SAVE_EDITOR_TRANSLATIONS = {
         msgReloaded: "Valores recargados.",
         msgDownloadStarted: "Descarga iniciada. Reemplaza el archivo con el juego cerrado.",
         disclaimer: "Herramienta de fans no oficial. Eres responsable del uso conforme a los términos del juego y las leyes aplicables.",
-        languageLabel: "Idioma"
+        languageLabel: "Idioma",
+        savePathLabel: "Ruta de guardado",
+        savePathValue: "C:\\Users\\<TuUsuario>\\AppData\\LocalLow\\Hovgaard Games\\Big Ambitions"
     },
     pt: {
         title: "Editor de save Big Ambitions",
@@ -242,7 +262,9 @@ export const BIG_AMBITIONS_SAVE_EDITOR_TRANSLATIONS = {
         msgReloaded: "Valores recarregados.",
         msgDownloadStarted: "Descarregamento iniciado. Substitua o ficheiro com o jogo fechado.",
         disclaimer: "Ferramenta de fãs não oficial. É responsável pela utilização em conformidade com os termos do jogo e leis aplicáveis.",
-        languageLabel: "Idioma"
+        languageLabel: "Idioma",
+        savePathLabel: "Caminho das gravações",
+        savePathValue: "C:\\Users\\<SeuUtilizador>\\AppData\\LocalLow\\Hovgaard Games\\Big Ambitions"
     },
     nl: {
         title: "Big Ambitions save-editor",
@@ -262,7 +284,9 @@ export const BIG_AMBITIONS_SAVE_EDITOR_TRANSLATIONS = {
         msgReloaded: "Waarden herladen.",
         msgDownloadStarted: "Download gestart. Vervang het bestand wanneer het spel is gesloten.",
         disclaimer: "Niet-officiële fantool. U bent verantwoordelijk voor gebruik in overeenstemming met de spelvoorwaarden en toepasselijke wetten.",
-        languageLabel: "Taal"
+        languageLabel: "Taal",
+        savePathLabel: "Opslaglocatie",
+        savePathValue: "C:\\Users\\<Gebruikersnaam>\\AppData\\LocalLow\\Hovgaard Games\\Big Ambitions"
     },
     tr: {
         title: "Big Ambitions kayıt düzenleyici",
@@ -282,7 +306,9 @@ export const BIG_AMBITIONS_SAVE_EDITOR_TRANSLATIONS = {
         msgReloaded: "Değerler yeniden yüklendi.",
         msgDownloadStarted: "İndirme başladı. Dosyayı oyun kapatılmışken değiştirin.",
         disclaimer: "Gayri resmi hayran aracı. Oyun şartları ve geçerli yasalara uygun kullanımdan siz sorumlusunuz.",
-        languageLabel: "Dil"
+        languageLabel: "Dil",
+        savePathLabel: "Kayıt konumu",
+        savePathValue: "C:\\Users\\<KullanıcıAdı>\\AppData\\LocalLow\\Hovgaard Games\\Big Ambitions"
     },
     no: {
         title: "Big Ambitions lagringsredigerer",
@@ -302,7 +328,9 @@ export const BIG_AMBITIONS_SAVE_EDITOR_TRANSLATIONS = {
         msgReloaded: "Verdier lastet inn på nytt.",
         msgDownloadStarted: "Nedlasting startet. Erstatt filen mens spillet er lukket.",
         disclaimer: "Uoffisielt fantverktøy. Du er ansvarlig for bruk i tråd med spillvilkårene og gjeldende lover.",
-        languageLabel: "Språk"
+        languageLabel: "Språk",
+        savePathLabel: "Lagringsplassering",
+        savePathValue: "C:\\Users\\<Brukernavn>\\AppData\\LocalLow\\Hovgaard Games\\Big Ambitions"
     },
     pl: {
         title: "Edytor zapisów Big Ambitions",
@@ -322,7 +350,9 @@ export const BIG_AMBITIONS_SAVE_EDITOR_TRANSLATIONS = {
         msgReloaded: "Wartości przeładowane.",
         msgDownloadStarted: "Pobieranie rozpoczęte. Zamień plik przy wyłączonej grze.",
         disclaimer: "Nieoficjalne narzędzie fanów. Odpowiadasz za użytkowanie zgodnie z warunkami gry i obowiązującym prawem.",
-        languageLabel: "Język"
+        languageLabel: "Język",
+        savePathLabel: "Ścieżka zapisu",
+        savePathValue: "C:\\Users\\<NazwaUżytkownika>\\AppData\\LocalLow\\Hovgaard Games\\Big Ambitions"
     },
     cs: {
         title: "Editor uložených her Big Ambitions",
@@ -342,7 +372,9 @@ export const BIG_AMBITIONS_SAVE_EDITOR_TRANSLATIONS = {
         msgReloaded: "Hodnoty znovu načteny.",
         msgDownloadStarted: "Stahování zahájeno. Soubor nahraďte při zavřené hře.",
         disclaimer: "Neoficiální fanouškovský nástroj. Za použití v souladu s podmínkami hry a platnými zákony odpovídáte vy.",
-        languageLabel: "Jazyk"
+        languageLabel: "Jazyk",
+        savePathLabel: "Cesta k uloženým hrám",
+        savePathValue: "C:\\Users\\<Uživatel>\\AppData\\LocalLow\\Hovgaard Games\\Big Ambitions"
     }
 };
 
